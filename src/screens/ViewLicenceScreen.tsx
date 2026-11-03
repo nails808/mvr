@@ -130,12 +130,6 @@ export function ViewLicenceScreen({
           </div>
         </div>
 
-        {/* Victoria Police barcode — 1D, licence number, no human-readable text */}
-        <div className="licence-card__barcode-block">
-          <div className="licence-card__barcode-label">Victoria Police barcode</div>
-          <LicenceBarcode value={userData.licenceNumber} />
-        </div>
-
         <div className="licence-card__footer">
           <span>
             {userData.proficiency} · {userData.conditions}
@@ -208,6 +202,12 @@ export function ViewLicenceScreen({
         <button type="button" className="licence-verify-btn" onClick={startVerify}>
           Verify Licence
         </button>
+      </div>
+
+      {/* Victoria Police barcode — displayed below Verify Licence at full width */}
+      <div className="licence-barcode-block">
+        <div className="licence-barcode-label">Victoria Police barcode</div>
+        <LicenceBarcode value={userData.licenceNumber} />
       </div>
 
       {/* Consent sheet — original copy before QR */}

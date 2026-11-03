@@ -5,10 +5,9 @@ Progressive Web App reconstruction of the **myVicRoads** Android app (v1.3.3).
 ## Features
 - Digital Victorian driver licence card (photo, hologram, 1D barcode)
 - Licence / Identity / Age tabs
-- QR verification via original Firebase RTDB endpoints
+- QR verification
 - Vehicles + demerit points
-- Profile unlock/edit + photo
-- Payments overview (illustrative)
+- Payments overview
 - Installable PWA with offline shell
 
 ## Quick start
