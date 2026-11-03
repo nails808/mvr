@@ -1,0 +1,197 @@
+.app {
+  min-height: 100dvh;
+  background: #E8ECEE;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Stack (overlay) screens */
+.stack-screen {
+  min-height: 100dvh;
+  background: #E8ECEE;
+  display: flex;
+  flex-direction: column;
+}
+
+.stack-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  background: #ffffff;
+  border-bottom: 1px solid #E8EAED;
+}
+
+.stack-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1A2A3A;
+  margin: 0;
+  flex: 1;
+}
+
+.stack-back {
+  background: none;
+  border: none;
+  font-size: 17px;
+  color: #0D2D6B;
+  font-weight: 500;
+  padding: 4px 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stack-body {
+  padding: 20px 16px;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vehicle-card-preview {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 18px;
+  border: 1px solid #E8EAED;
+}
+
+.vehicle-rego {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0D2D6B;
+  letter-spacing: 0.04em;
+}
+
+.vehicle-desc {
+  font-size: 14px;
+  color: #1A2A3A;
+  margin-top: 6px;
+}
+
+.vehicle-status {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2E7D32;
+  background: #E8F5E9;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* ── Shared modal (Profile + Vehicles edit dialogs) ── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 42, 58, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 200;
+  padding: 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.modal {
+  background: #fff;
+  border-radius: 16px 16px 12px 12px;
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+}
+
+.modal-title {
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1A2A3A;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #E0E4E8;
+  border-radius: 10px;
+  background: #F5F6F8;
+  font-size: 16px;
+  color: #1A2A3A;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.modal-input:focus {
+  border-color: #0D2D6B;
+  background: #fff;
+}
+
+.modal-textarea {
+  resize: vertical;
+  min-height: 96px;
+  line-height: 1.4;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: #0D2D6B;
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #F5F6F8;
+  color: #1A2A3A;
+  border: 1px solid #E0E4E8;
+}
+
+.stack-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.offline-banner {
+  position: sticky;
+  top: 0;
+  z-index: 150;
+  background: #1E2D3D;
+  color: #fff;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 12px;
+  padding-top: max(8px, env(safe-area-inset-top));
+}
+
+/* iOS standalone: avoid content under home indicator on bottom nav */
+@supports (padding: max(0px)) {
+  .bottom-nav {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+    min-height: calc(64px + env(safe-area-inset-bottom));
+  }
+}
