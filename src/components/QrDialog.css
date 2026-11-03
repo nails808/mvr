@@ -1,0 +1,158 @@
+.qr-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 42, 58, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 300;
+  padding: 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.qr-dialog {
+  background: #fff;
+  border-radius: 16px 16px 12px 12px;
+  width: 100%;
+  max-width: 400px;
+  max-height: min(90dvh, 640px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.qr-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 10px;
+  border-bottom: 1px solid #E8EAED;
+  flex-shrink: 0;
+}
+
+.qr-dialog__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1A2A3A;
+}
+
+.qr-dialog__close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #F5F6F8;
+  font-size: 14px;
+  cursor: pointer;
+  color: #1A2A3A;
+}
+
+.qr-dialog__body {
+  padding: 20px 18px;
+  overflow-y: auto;
+  flex: 1;
+  text-align: center;
+}
+
+.qr-image {
+  width: 240px;
+  height: 240px;
+  margin: 0 auto;
+  display: block;
+  border-radius: 8px;
+  border: 1px solid #E8EAED;
+}
+
+.qr-expires {
+  margin: 14px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0D2D6B;
+  font-variant-numeric: tabular-nums;
+}
+
+.qr-sharing {
+  margin-top: 18px;
+  text-align: left;
+  background: #F5F6F8;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.qr-sharing__title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6B7C8D;
+}
+
+.qr-sharing__list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: #1A2A3A;
+  line-height: 1.55;
+}
+
+.qr-status {
+  padding: 28px 8px;
+  color: #1A2A3A;
+  font-size: 15px;
+}
+
+.qr-status--error {
+  color: #D32F2F;
+}
+
+.qr-status--success {
+  color: #2E7D32;
+}
+
+.qr-status-hint {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #8A9AB0;
+}
+
+.qr-spinner {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 16px;
+  border: 3px solid #E8EAED;
+  border-top-color: #0D2D6B;
+  border-radius: 50%;
+  animation: qr-spin 0.8s linear infinite;
+}
+
+@keyframes qr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.qr-check {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #E8F5E9;
+  color: #2E7D32;
+  font-size: 32px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-dialog__footer {
+  padding: 12px 18px 18px;
+  border-top: 1px solid #E8EAED;
+  flex-shrink: 0;
+}
+
+.qr-close-btn {
+  width: 100%;
+  padding: 12px;
+}

@@ -1,0 +1,24 @@
+.placeholder-screen {
+  padding: 24px 16px 88px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.placeholder-screen h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1A2A3A;
+  margin: 0 0 12px;
+}
+
+.placeholder-note {
+  color: #6B7C8D;
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+
+.placeholder-meta {
+  color: #8A9AB0;
+  font-size: 13px;
+  margin: 0;
+}

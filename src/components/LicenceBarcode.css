@@ -1,0 +1,19 @@
+.licence-barcode {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 8px 4px 2px;
+  background: #ffffff;
+  border-radius: 4px;
+  margin-top: 10px;
+  position: relative;
+  z-index: 3;
+}
+
+.licence-barcode__svg {
+  width: 100%;
+  max-width: 280px;
+  height: 48px;
+  display: block;
+}
