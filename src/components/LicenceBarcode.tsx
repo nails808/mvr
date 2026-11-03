@@ -34,7 +34,7 @@ export function LicenceBarcode({ value, className }: LicenceBarcodeProps) {
         width: 1.6,
         height: 48,
         background: 'transparent',
-        lineColor: '#0D2D6B',
+        lineColor: '#000000',
       });
     } catch {
       // Invalid characters for Code128 — fail silently

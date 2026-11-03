@@ -25,6 +25,39 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function CardNumberDetailRow({ value, revealed, onToggle }: {
+  value: string;
+  revealed: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="lic-detail-row">
+      <span className="lic-detail-label">Card number</span>
+      <span className="lic-detail-value lic-detail-value--sensitive">
+        <span>{revealed ? value || '—' : '*******'}</span>
+        <button
+          type="button"
+          className="lic-detail-visibility"
+          onClick={onToggle}
+          aria-label={revealed ? 'Hide card number' : 'Show card number'}
+          title={revealed ? 'Hide card number' : 'Show card number'}
+        >
+          {revealed ? (
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M2.1 12s3.6-6 9.9-6 9.9 6 9.9 6-3.6 6-9.9 6-9.9-6-9.9-6Z" />
+              <circle cx="12" cy="12" r="2.6" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m3 3 18 18M10.6 6.2C11.1 6.1 11.5 6 12 6c6.3 0 9.9 6 9.9 6a17.2 17.2 0 0 1-3.1 3.5M6.2 6.9C3.8 8.6 2.1 12 2.1 12s3.6 6 9.9 6c1.5 0 2.8-.3 3.9-.8" />
+            </svg>
+          )}
+        </button>
+      </span>
+    </div>
+  );
+}
+
 /** Rough age check from DOB strings like "01 Jan 1990" */
 function isOver18(dob: string): boolean {
   const d = Date.parse(dob);
@@ -42,6 +75,7 @@ export function ViewLicenceScreen({
   const [tab, setTab] = useState<LicenceTab>('Licence');
   const [showConsent, setShowConsent] = useState(false);
   const [showQr, setShowQr] = useState(false);
+  const [showCardNumber, setShowCardNumber] = useState(false);
 
   const fullName = `${userData.firstName} ${userData.lastName}`.toUpperCase();
   const isLicenced = userData.licenceStatus.toLowerCase().includes('licen') &&
@@ -165,7 +199,11 @@ export function ViewLicenceScreen({
             <DetailRow label="Licence expiry" value={userData.licenceExpiry} />
             <DetailRow label="Conditions" value={userData.conditions} />
             <div className="lic-section-header">Other details</div>
-            <DetailRow label="Card number" value={userData.cardNumber} />
+            <CardNumberDetailRow
+              value={userData.cardNumber}
+              revealed={showCardNumber}
+              onToggle={() => setShowCardNumber((visible) => !visible)}
+            />
           </>
         )}
 
@@ -206,7 +244,6 @@ export function ViewLicenceScreen({
 
       {/* Victoria Police barcode — displayed below Verify Licence at full width */}
       <div className="licence-barcode-block">
-        <div className="licence-barcode-label">Victoria Police barcode</div>
         <LicenceBarcode value={userData.licenceNumber} />
       </div>
 
