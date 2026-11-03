@@ -171,3 +171,39 @@
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
+
+.demerit-hero__youhave {
+  margin: 8px 0 0;
+  font-size: 15px;
+  opacity: 0.95;
+}
+
+.demerit-hero__youhave strong {
+  font-weight: 700;
+}
+
+.demerit-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #E8EAED;
+  font-size: 15px;
+  font-weight: 500;
+  color: #1A2A3A;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.demerit-link-row--last {
+  border-bottom: none;
+}
+
+.demerit-chevron {
+  color: #8A9AB0;
+  font-size: 18px;
+}

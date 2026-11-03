@@ -10,9 +10,10 @@ import './ViewLicenceScreen.css';
 interface ViewLicenceScreenProps {
   userData: UserData;
   photoUri: string | null;
-  /** When true, parent already shows a back header (stack mode) */
   embedded?: boolean;
   onBack?: () => void;
+  onUserDataChange?: (data: UserData) => void;
+  onPhotoChange?: (uri: string | null) => void;
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
@@ -24,6 +25,14 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** Rough age check from DOB strings like "01 Jan 1990" */
+function isOver18(dob: string): boolean {
+  const d = Date.parse(dob);
+  if (Number.isNaN(d)) return true;
+  const age = (Date.now() - d) / (365.25 * 24 * 3600 * 1000);
+  return age >= 18;
+}
+
 export function ViewLicenceScreen({
   userData,
   photoUri,
@@ -31,9 +40,19 @@ export function ViewLicenceScreen({
   onBack,
 }: ViewLicenceScreenProps) {
   const [tab, setTab] = useState<LicenceTab>('Licence');
+  const [showConsent, setShowConsent] = useState(false);
   const [showQr, setShowQr] = useState(false);
 
   const fullName = `${userData.firstName} ${userData.lastName}`.toUpperCase();
+  const isLicenced = userData.licenceStatus.toLowerCase().includes('licen') &&
+    !userData.licenceStatus.toLowerCase().includes('unlicen');
+  const over18 = isOver18(userData.dob);
+
+  const startVerify = () => setShowConsent(true);
+  const acceptConsent = () => {
+    setShowConsent(false);
+    setShowQr(true);
+  };
 
   return (
     <div className={`view-licence ${embedded ? 'view-licence--embedded' : ''}`}>
@@ -48,21 +67,26 @@ export function ViewLicenceScreen({
         </header>
       )}
 
-      {/* Digital card */}
+      {!isLicenced && (
+        <div className="licence-warning" role="alert">
+          ⚠️ One or more of these licences or permits is not current. It is illegal to drive or
+          ride under this licence or permit.
+        </div>
+      )}
+
+      {/* Digital card — original labels: DRIVER LICENCE, Victoria Australia */}
       <div className="licence-card">
         <HologramOverlay />
 
         <div className="licence-card__header">
           <img src={vlogo} alt="VicRoads" className="licence-card__logo" />
           <div className="licence-card__header-text">
-            <div className="licence-card__title">Victorian</div>
-            <div className="licence-card__subtitle">Driver Licence</div>
+            <div className="licence-card__title">DRIVER LICENCE</div>
+            <div className="licence-card__subtitle">Victoria Australia</div>
           </div>
           <div
             className={`licence-card__status-pill ${
-              userData.licenceStatus.toLowerCase().includes('licen')
-                ? 'licence-card__status-pill--ok'
-                : ''
+              isLicenced ? 'licence-card__status-pill--ok' : 'licence-card__status-pill--bad'
             }`}
           >
             {userData.licenceStatus}
@@ -72,37 +96,45 @@ export function ViewLicenceScreen({
         <div className="licence-card__body">
           <div className="licence-card__photo-col">
             {photoUri ? (
-              <img src={photoUri} alt="Licence photo" className="licence-card__photo" />
+              <img src={photoUri} alt="Victorian driver licence photo" className="licence-card__photo" />
             ) : (
               <div className="licence-card__photo licence-card__photo--empty">
-                <span>PHOTO</span>
+                <span>
+                  Tap to
+                  <br />
+                  add photo
+                </span>
               </div>
             )}
-            <div className="licence-card__card-no">Card {userData.cardNumber}</div>
+            <div className="licence-card__card-no">Card number {userData.cardNumber}</div>
           </div>
 
           <div className="licence-card__info-col">
             <div className="licence-card__name">{fullName}</div>
             <div className="licence-card__field">
-              <span className="licence-card__field-label">Licence no.</span>
+              <span className="licence-card__field-label">Licence number</span>
               <span className="licence-card__field-value">{userData.licenceNumber}</span>
             </div>
             <div className="licence-card__field">
-              <span className="licence-card__field-label">Type</span>
+              <span className="licence-card__field-label">Licence type</span>
               <span className="licence-card__field-value">{userData.licenceType}</span>
             </div>
             <div className="licence-card__field">
-              <span className="licence-card__field-label">Expires</span>
+              <span className="licence-card__field-label">Licence expiry</span>
               <span className="licence-card__field-value">{userData.licenceExpiry}</span>
             </div>
             <div className="licence-card__field">
-              <span className="licence-card__field-label">DOB</span>
+              <span className="licence-card__field-label">Date of birth</span>
               <span className="licence-card__field-value">{userData.dob}</span>
             </div>
           </div>
         </div>
 
-        <LicenceBarcode value={userData.licenceNumber} />
+        {/* Victoria Police barcode — 1D, licence number, no human-readable text */}
+        <div className="licence-card__barcode-block">
+          <div className="licence-card__barcode-label">Victoria Police barcode</div>
+          <LicenceBarcode value={userData.licenceNumber} />
+        </div>
 
         <div className="licence-card__footer">
           <span>
@@ -127,27 +159,26 @@ export function ViewLicenceScreen({
         ))}
       </div>
 
-      {/* Tab content */}
       <div className="licence-panel" role="tabpanel">
         {tab === 'Licence' && (
           <>
+            <div className="lic-section-header">Car licence details</div>
             <DetailRow label="Licence number" value={userData.licenceNumber} />
             <DetailRow label="Licence type" value={userData.licenceType} />
             <DetailRow label="Proficiency" value={userData.proficiency} />
-            <DetailRow label="Status" value={userData.licenceStatus} />
+            <DetailRow label="Licence status" value={userData.licenceStatus} />
             <DetailRow label="Issue date" value={userData.issueDate} />
-            <DetailRow label="Expiry" value={userData.licenceExpiry} />
+            <DetailRow label="Licence expiry" value={userData.licenceExpiry} />
             <DetailRow label="Conditions" value={userData.conditions} />
+            <div className="lic-section-header">Other details</div>
             <DetailRow label="Card number" value={userData.cardNumber} />
           </>
         )}
 
         {tab === 'Identity' && (
           <>
-            <DetailRow
-              label="Full name"
-              value={`${userData.firstName} ${userData.lastName}`}
-            />
+            <DetailRow label="First name" value={userData.firstName} />
+            <DetailRow label="Last name" value={userData.lastName} />
             <DetailRow label="Date of birth" value={userData.dob} />
             <DetailRow label="Address" value={userData.address} />
             <DetailRow label="Licence number" value={userData.licenceNumber} />
@@ -160,31 +191,58 @@ export function ViewLicenceScreen({
         {tab === 'Age' && (
           <>
             <div className="age-highlight">
-              <div className="age-highlight__label">Date of birth</div>
-              <div className="age-highlight__value">{userData.dob}</div>
+              <div className="age-highlight__label">Age status</div>
+              <div className="age-highlight__value">{over18 ? 'Over 18' : 'Under 18'}</div>
+              <div className="age-highlight__dob">Date of birth · {userData.dob}</div>
             </div>
             <DetailRow
               label="Full name"
               value={`${userData.firstName} ${userData.lastName}`}
             />
             <DetailRow label="Licence status" value={userData.licenceStatus} />
-            <p className="licence-panel-note">
-              Present this tab when only age verification is required.
-            </p>
           </>
         )}
       </div>
 
-      {/* Verify CTA */}
       <div className="licence-actions">
-        <button
-          type="button"
-          className="licence-verify-btn"
-          onClick={() => setShowQr(true)}
-        >
+        <button type="button" className="licence-verify-btn" onClick={startVerify}>
           Verify Licence
         </button>
       </div>
+
+      {/* Consent sheet — original copy before QR */}
+      {showConsent && (
+        <div className="modal-backdrop" onClick={() => setShowConsent(false)}>
+          <div className="modal qr-consent-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-title">Do you consent to share your information?</h3>
+            <p className="consent-lead">
+              Presenting a QR code allows your driver licence information to be scanned and shared.
+            </p>
+            <p className="consent-body">
+              By presenting this QR code you consent to share some or all of your driver licence
+              information, including with scanners, venues and law enforcement agencies. They may
+              retain your information in accordance with their business practices and legal
+              requirements.
+            </p>
+            <p className="consent-sharing-title">You&apos;re sharing:</p>
+            <ul className="consent-list">
+              <li>Full name, birth date and address</li>
+              <li>Licence number, type and expiry date</li>
+              <li>Licence status</li>
+              <li>Proficiency</li>
+              <li>Victorian driver licence photo</li>
+            </ul>
+            <div className="modal-actions consent-actions">
+              <button type="button" className="btn-secondary" onClick={() => setShowConsent(false)}>
+                Cancel
+              </button>
+              <button type="button" className="btn-primary" onClick={acceptConsent}>
+                Reveal QR code
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showQr && (
         <QrDialog

@@ -1,6 +1,5 @@
 import type { UserData } from '../data/UserData';
 import type { StackDest } from '../components/NavTab';
-import { VicColors } from '../theme/colors';
 import './HomeScreen.css';
 
 interface HomeScreenProps {

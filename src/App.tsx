@@ -5,6 +5,7 @@ import { userRepository } from './data/UserRepository';
 import type { UserData } from './data/UserData';
 import { HomeScreen } from './screens/HomeScreen';
 import { VehiclesScreen } from './screens/VehiclesScreen';
+import { MyVehiclesScreen } from './screens/MyVehiclesScreen';
 import { LicenceScreen } from './screens/LicenceScreen';
 import { PaymentsScreen } from './screens/PaymentsScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
@@ -57,6 +58,7 @@ function App() {
     setPhotoUri(uri);
   }, []);
 
+  // Stack: digital licence card (Home "My licence" or Licence menu)
   if (stack === 'viewlicence') {
     return (
       <div className="app">
@@ -68,7 +70,13 @@ function App() {
             <h1>Licence</h1>
           </header>
           <div className="stack-scroll">
-            <ViewLicenceScreen userData={userData} photoUri={photoUri} embedded />
+            <ViewLicenceScreen
+              userData={userData}
+              photoUri={photoUri}
+              embedded
+              onUserDataChange={handleUserDataChange}
+              onPhotoChange={handlePhotoChange}
+            />
           </div>
         </div>
       </div>
@@ -101,13 +109,12 @@ function App() {
             <button type="button" className="stack-back" onClick={handleBack}>
               ‹ Back
             </button>
-            <h1>My vehicles</h1>
+            <h1>My registered vehicles</h1>
           </header>
           <div className="stack-scroll">
-            <VehiclesScreen
+            <MyVehiclesScreen
               userData={userData}
               onUserDataChange={handleUserDataChange}
-              hideHeader
             />
           </div>
         </div>
@@ -121,15 +128,13 @@ function App() {
       content = <HomeScreen userData={userData} onNavigate={handleNavigate} />;
       break;
     case 'Vehicles':
-      content = (
-        <VehiclesScreen userData={userData} onUserDataChange={handleUserDataChange} />
-      );
+      content = <VehiclesScreen onNavigate={handleNavigate} />;
       break;
     case 'Licence':
-      content = <LicenceScreen userData={userData} photoUri={photoUri} />;
+      content = <LicenceScreen onNavigate={handleNavigate} />;
       break;
     case 'Payments':
-      content = <PaymentsScreen userData={userData} />;
+      content = <PaymentsScreen />;
       break;
     case 'Profile':
       content = (

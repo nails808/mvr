@@ -25,7 +25,11 @@ export function DemeritScreen({ userData, onUserDataChange }: DemeritScreenProps
   return (
     <div className="demerit-screen">
       <div className={`demerit-hero demerit-hero--${level}`}>
-        <div className="demerit-hero__label">Current demerit points</div>
+        <div className="demerit-hero__label">Demerit points</div>
+        {/* Original copy: "You have X of Y" */}
+        <p className="demerit-hero__youhave">
+          You have <strong>{points}</strong> of <strong>{max}</strong>
+        </p>
         <div className="demerit-hero__points">
           <span className="demerit-hero__current">{points}</span>
           <span className="demerit-hero__sep">/</span>
@@ -35,21 +39,34 @@ export function DemeritScreen({ userData, onUserDataChange }: DemeritScreenProps
           <div className="demerit-bar__fill" style={{ width: `${pct}%` }} />
         </div>
         <p className="demerit-hero__remain">
-          {remaining === max
-            ? 'No demerit points recorded'
-            : remaining === 0
-              ? 'Maximum points reached'
-              : `${remaining} point${remaining === 1 ? '' : 's'} remaining before maximum`}
+          {points === 0
+            ? `You have ${max} demerit points remaining on your licence.`
+            : points >= max
+              ? `${points} points used`
+              : `You have ${remaining} demerit points remaining on your licence.`}
         </p>
       </div>
 
       <section className="demerit-section">
-        <h2 className="demerit-section-title">About demerit points</h2>
         <div className="demerit-card">
-          <p className="demerit-info">
-            Demerit points are recorded against your Victorian driver licence for certain
-            traffic offences. Full licence holders typically have a maximum of {max} points.
-          </p>
+          <button type="button" className="demerit-link-row">
+            <span>Demerit point offences</span>
+            <span className="demerit-chevron">›</span>
+          </button>
+          <button type="button" className="demerit-link-row">
+            <span>Good behaviour option</span>
+            <span className="demerit-chevron">›</span>
+          </button>
+          <button type="button" className="demerit-link-row demerit-link-row--last">
+            <span>How demerit points work</span>
+            <span className="demerit-chevron">›</span>
+          </button>
+        </div>
+      </section>
+
+      <section className="demerit-section">
+        <h2 className="demerit-section-title">Licence</h2>
+        <div className="demerit-card">
           <div className="demerit-row">
             <span className="demerit-row-label">Licence holder</span>
             <span className="demerit-row-value">

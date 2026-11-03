@@ -315,3 +315,93 @@
   height: 44px;
   max-width: 100%;
 }
+
+.licence-warning {
+  background: #FDECEA;
+  color: #B71C1C;
+  border: 1px solid #f5c6c2;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+.licence-card__status-pill--bad {
+  background: #D32F2F;
+  color: #fff;
+}
+
+.licence-card__barcode-block {
+  position: relative;
+  z-index: 3;
+  margin-top: 12px;
+}
+
+.licence-card__barcode-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  margin-bottom: 4px;
+}
+
+.licence-card .licence-barcode {
+  margin-top: 0;
+}
+
+.lic-section-header {
+  padding: 12px 16px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6B7C8D;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #F5F6F8;
+  border-bottom: 1px solid #E8EAED;
+}
+
+.age-highlight__dob {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #6B7C8D;
+}
+
+.consent-lead {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #1A2A3A;
+  line-height: 1.45;
+}
+
+.consent-body {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #6B7C8D;
+  line-height: 1.45;
+}
+
+.consent-sharing-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1A2A3A;
+}
+
+.consent-list {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  font-size: 13px;
+  color: #1A2A3A;
+  line-height: 1.5;
+}
+
+.consent-actions {
+  margin-top: 8px;
+}
+
+.qr-consent-modal {
+  max-height: min(90dvh, 640px);
+  overflow-y: auto;
+}

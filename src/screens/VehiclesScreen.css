@@ -186,3 +186,11 @@
   padding: 0 16px;
   margin-top: 8px;
 }
+
+.vehicles-screen--detail {
+  padding-top: 8px;
+}
+.vehicles-header--compact {
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
