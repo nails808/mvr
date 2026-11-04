@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
 import type { UserData } from '../data/UserData';
@@ -100,13 +100,10 @@ export function ViewLicenceScreen({
   userData,
   photoUri,
   onBack,
-  onUserDataChange,
-  onPhotoChange,
 }: ViewLicenceScreenProps) {
   const [tab, setTab] = useState<LicenceTab>('Licence');
   const [lastRefreshed] = useState(() => new Date());
   const [cardRevealed, setCardRevealed] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const [qrPhase, setQrPhase] = useState<QrPhase>('hidden');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -117,7 +114,6 @@ export function ViewLicenceScreen({
   const pollRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
 
-  const unlocked = userData.isUnlocked;
   const displayName = `${userData.firstName} ${userData.lastName}`.trim().toUpperCase();
   const over18 = isOver18(userData.dob);
   const licenceCurrent = isLicenceCurrentByExpiry(userData.licenceExpiry);
@@ -175,49 +171,14 @@ export function ViewLicenceScreen({
 
 
 
-  const onPhotoFile = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !onPhotoChange) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') onPhotoChange(reader.result);
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
 
 
-  const photoEl = (
-    <>
-      {unlocked && onPhotoChange ? (
-        <label className="dl-photo-btn dl-photo-btn--editable">
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="dl-photo-input"
-            onChange={onPhotoFile}
-          />
-          {photoUri ? (
-            <img src={photoUri} alt="Licence photo" className="dl-photo" />
-          ) : (
-            <div className="dl-photo dl-photo--empty">
-              <span>
-                Tap to
-                <br />
-                add photo
-              </span>
-            </div>
-          )}
-        </label>
-      ) : photoUri ? (
-        <img src={photoUri} alt="Licence photo" className="dl-photo" />
-      ) : (
-        <div className="dl-photo dl-photo--empty">
-          <span>No photo</span>
-        </div>
-      )}
-    </>
+  const photoEl = photoUri ? (
+    <img src={photoUri} alt="Licence photo" className="dl-photo" />
+  ) : (
+    <div className="dl-photo dl-photo--empty">
+      <span>No photo</span>
+    </div>
   );
 
   return (

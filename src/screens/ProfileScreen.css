@@ -235,3 +235,34 @@
 .profile-section--first {
   margin-top: 16px;
 }
+
+.profile-row--btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: none;
+  border: none;
+  border-top: 1px solid #E8EAED;
+  padding: 14px 16px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+.profile-row--btn:active {
+  background: #F5F6F8;
+}
+
+.profile-row-value--link {
+  color: #0D2D6B;
+  font-weight: 600;
+}
+
+/* Hide legacy lock row if any styles remain */
+.profile-lock-row {
+  display: none !important;
+}
