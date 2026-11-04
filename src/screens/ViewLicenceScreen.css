@@ -813,3 +813,16 @@
 .licence-barcode-full {
   display: none;
 }
+
+.dl-photo-stack {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.dl-photo-stack .dl-photo {
+  width: 100%;
+  display: block;
+}

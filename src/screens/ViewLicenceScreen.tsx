@@ -8,6 +8,7 @@ import {
   type CreateSessionResult,
 } from '../data/VerificationRepository';
 import { LicenceBarcode } from '../components/LicenceBarcode';
+import { HologramOverlay } from '../components/HologramOverlay';
 import { LICENCE_TABS, type LicenceTab } from '../components/LicenceTab';
 import vlogo from '../assets/vlogo_nobg.png';
 import './ViewLicenceScreen.css';
@@ -173,11 +174,16 @@ export function ViewLicenceScreen({
 
 
 
-  const photoEl = photoUri ? (
-    <img src={photoUri} alt="Licence photo" className="dl-photo" />
-  ) : (
-    <div className="dl-photo dl-photo--empty">
-      <span>No photo</span>
+  const photoEl = (
+    <div className="dl-photo-stack">
+      {photoUri ? (
+        <img src={photoUri} alt="Licence photo" className="dl-photo" />
+      ) : (
+        <div className="dl-photo dl-photo--empty">
+          <span>No photo</span>
+        </div>
+      )}
+      <HologramOverlay />
     </div>
   );
 

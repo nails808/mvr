@@ -1,64 +1,90 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import hologramSrc from '../assets/hologram.png';
 import './HologramOverlay.css';
 
 /**
- * Approximates the original Compose HologramOverlay which used the
- * accelerometer for a tilt/shimmer effect. Here we combine:
- * - CSS shimmer animation (always on)
- * - DeviceOrientationEvent when available (HTTPS + permission on iOS)
+ * Holographic foil overlay — responds to device orientation (tilt)
+ * and pointer movement as a desktop fallback.
  */
 export function HologramOverlay() {
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const allowed = useRef(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    let raf = 0;
+    let targetX = 50;
+    let targetY = 40;
+    let curX = 50;
+    let curY = 40;
+
+    const apply = () => {
+      curX += (targetX - curX) * 0.12;
+      curY += (targetY - curY) * 0.12;
+      el.style.setProperty('--holo-x', `${curX}%`);
+      el.style.setProperty('--holo-y', `${curY}%`);
+      el.style.setProperty('--holo-shine', `${((curX + curY) / 2).toFixed(1)}%`);
+      el.style.setProperty('--holo-angle', `${((curX - 50) * 0.6).toFixed(2)}deg`);
+      raf = requestAnimationFrame(apply);
+    };
+    raf = requestAnimationFrame(apply);
+
     const onOrient = (e: DeviceOrientationEvent) => {
       // beta: front-back (-180..180), gamma: left-right (-90..90)
-      const x = Math.max(-1, Math.min(1, (e.gamma ?? 0) / 45));
-      const y = Math.max(-1, Math.min(1, (e.beta ?? 0) / 45));
-      setTilt({ x, y });
+      const gamma = e.gamma ?? 0;
+      const beta = e.beta ?? 0;
+      targetX = Math.min(100, Math.max(0, 50 + gamma * 1.2));
+      targetY = Math.min(100, Math.max(0, 40 + (beta - 45) * 0.9));
+      setReady(true);
     };
 
-    const enable = () => {
-      if (allowed.current) return;
-      allowed.current = true;
-      window.addEventListener('deviceorientation', onOrient);
+    const onPointer = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      targetX = ((e.clientX - r.left) / r.width) * 100;
+      targetY = ((e.clientY - r.top) / r.height) * 100;
     };
 
-    // iOS 13+ requires explicit permission
-    const DOE = DeviceOrientationEvent as unknown as {
+    window.addEventListener('deviceorientation', onOrient);
+    el.addEventListener('pointermove', onPointer);
+
+    // iOS 13+ requires permission
+    const doe = DeviceOrientationEvent as unknown as {
       requestPermission?: () => Promise<'granted' | 'denied'>;
     };
-    if (typeof DOE.requestPermission === 'function') {
-      // Defer until first user gesture is impractical here; try quietly
-      DOE.requestPermission()
-        .then((r) => {
-          if (r === 'granted') enable();
-        })
-        .catch(() => {
-          /* ignore — CSS shimmer still works */
+    if (typeof doe.requestPermission === 'function') {
+      // Permission is requested on first user gesture; soft-fail if blocked
+      const ask = () => {
+        void doe.requestPermission?.().then((state) => {
+          if (state === 'granted') setReady(true);
         });
+        window.removeEventListener('click', ask);
+        window.removeEventListener('touchend', ask);
+      };
+      window.addEventListener('click', ask, { once: true });
+      window.addEventListener('touchend', ask, { once: true });
     } else {
-      enable();
+      setReady(true);
     }
 
     return () => {
+      cancelAnimationFrame(raf);
       window.removeEventListener('deviceorientation', onOrient);
+      el.removeEventListener('pointermove', onPointer);
     };
   }, []);
 
-  const style: CSSProperties = {
-    transform: `translate(${tilt.x * 6}px, ${tilt.y * 4}px) rotate(${tilt.x * 3}deg)`,
-    // shift highlight with tilt
-    ['--holo-x' as string]: `${50 + tilt.x * 20}%`,
-    ['--holo-y' as string]: `${40 + tilt.y * 15}%`,
-  };
-
   return (
-    <div className="hologram-overlay" style={style} aria-hidden>
-      <img src={hologramSrc} alt="" className="hologram-overlay__img" draggable={false} />
-      <div className="hologram-overlay__shimmer" />
+    <div
+      ref={ref}
+      className={`holo-overlay ${ready ? 'holo-overlay--ready' : ''}`}
+      aria-hidden
+    >
+      <img src={hologramSrc} alt="" className="holo-overlay__img" draggable={false} />
+      <div className="holo-overlay__shine" />
+      <div className="holo-overlay__glint" />
     </div>
   );
 }
