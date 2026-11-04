@@ -67,9 +67,9 @@ function isLicenceCurrentByExpiry(expiry: string): boolean {
 }
 
 function signatureText(firstName: string, lastName: string): string {
-  const f = (firstName || '').trim();
-  const l = (lastName || '').trim();
-  if (f && l) return `${f} ${l}`;
+  const f = (firstName || '').trim().charAt(0).toUpperCase();
+  const l = (lastName || '').trim().charAt(0).toUpperCase();
+  if (f && l) return `${f}${l}`;
   return f || l || '';
 }
 

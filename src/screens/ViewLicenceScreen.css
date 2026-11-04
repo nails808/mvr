@@ -75,7 +75,7 @@
 .lic-sheet__block--sig .lic-signature {
   margin-top: 8px;
   padding: 12px 4px 16px;
-  font-size: 42px;
+  font-size: 48px;
 }
 
 /* Full height main without bottom nav */
@@ -692,13 +692,13 @@
   margin-top: 4px;
   margin-left: 0;
   padding: 4px 0 8px;
-  font-family: 'Dancing Script', 'Segoe Script', 'Bradley Hand', cursive;
-  font-size: 40px;
-  font-weight: 600;
+  font-family: 'Swanky and Moo Moo', 'Segoe Script', 'Bradley Hand', cursive;
+  font-size: 48px;
+  font-weight: 400;
   color: #1a1a1a;
   line-height: 1.15;
-  min-height: 52px;
-  letter-spacing: 0.03em;
+  min-height: 56px;
+  letter-spacing: 0.06em;
   text-align: left;
   display: block;
   width: 100%;
