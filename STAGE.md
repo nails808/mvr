@@ -1,5 +1,3 @@
-# myVicRoads PWA — Reconstruction Log
-
 ## Navigation (matches original MainActivityKt)
 | Tab / dest | Screen |
 |------------|--------|
