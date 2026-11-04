@@ -726,6 +726,7 @@
   display: block;
   width: 100% !important;
   height: 64px !important;
+  
 }
 
 /* Hide the old standalone barcode strip under panel if present */
