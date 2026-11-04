@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
 import {
   createSession,
@@ -89,7 +90,7 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
     };
   }, [userData, photoUri]);
 
-  return (
+  return createPortal(
     <div className="qr-backdrop" onClick={onClose}>
       <div className="qr-dialog" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal>
         <div className="qr-dialog__header">
@@ -158,5 +159,5 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
         </div>
       </div>
     </div>
-  );
+  , document.body);
 }

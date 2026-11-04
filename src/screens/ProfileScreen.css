@@ -1,7 +1,12 @@
+/* Profile — VicColors + Material-like type scale */
+
 .profile-screen {
   padding: 20px 16px 88px;
   max-width: 480px;
   margin: 0 auto;
+  font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #1A2A3A;
+  background: transparent;
 }
 
 .profile-header h1 {
@@ -10,24 +15,27 @@
   color: #1A2A3A;
   margin: 0;
   letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .profile-subtitle {
   margin: 4px 0 0;
   font-size: 14px;
+  font-weight: 400;
   color: #6B7C8D;
+  line-height: 1.35;
 }
 
 .profile-card {
-  background: #ffffff;
-  border-radius: 14px;
+  background: #FFFFFF;
+  border-radius: 12px;
   border: 1px solid #E8EAED;
   overflow: hidden;
 }
 
 .profile-photo-card {
-  padding: 20px 18px;
-  margin: 20px 0 8px;
+  padding: 20px 16px 16px;
+  margin: 16px 0 8px;
   text-align: center;
 }
 
@@ -38,38 +46,45 @@
   gap: 10px;
 }
 
+/* Exact original encode aspect: 100×125 (4:5 licence photo) */
 .profile-photo {
-  width: 96px;
-  height: 120px;
+  width: 100px;
+  height: 125px;
   object-fit: cover;
-  border-radius: 8px;
-  border: 2px solid #E8EAED;
+  object-position: center top;
+  border-radius: 4px;
+  border: 1px solid #E0E4E8;
   background: #F5F6F8;
+  display: block;
 }
 
 .profile-photo--placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0D2D6B, #2D3A4A);
+  background: linear-gradient(160deg, #0D2D6B 0%, #2D3A4A 100%);
   color: #fff;
   font-size: 28px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  font-family: Roboto, sans-serif;
 }
 
 .profile-photo-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .btn-sm {
   font-size: 13px;
   font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 20px;
+  font-family: Roboto, sans-serif;
+  padding: 6px 14px;
+  border-radius: 18px;
   border: 1px solid #0D2D6B;
-  background: #fff;
+  background: #FFFFFF;
   color: #0D2D6B;
   cursor: pointer;
 }
@@ -80,13 +95,14 @@
 }
 
 .profile-name-block {
-  margin: 14px 0 12px;
+  margin-top: 12px;
 }
 
 .profile-fullname {
   font-size: 20px;
   font-weight: 700;
   color: #1A2A3A;
+  letter-spacing: 0.01em;
 }
 
 .profile-meta {
@@ -95,27 +111,10 @@
   margin-top: 2px;
 }
 
-.unlock-btn {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: none;
-  background: #0D2D6B;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.unlock-btn--on {
-  background: #2E7D32;
-}
-
-.unlock-hint {
+.profile-edit-hint {
   margin: 10px 0 0;
   font-size: 12px;
-  color: #2E7D32;
+  color: #8A9AB0;
 }
 
 .profile-section {
@@ -123,11 +122,11 @@
 }
 
 .profile-section-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #6B7C8D;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   margin: 0 0 4px 4px;
 }
 
@@ -142,16 +141,18 @@
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 14px 16px;
+  min-height: 48px;
+  padding: 12px 16px;
   background: none;
   border: none;
   border-bottom: 1px solid #E8EAED;
   text-align: left;
   cursor: default;
-  font-family: inherit;
+  font-family: Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
+.profile-row--last,
 .profile-row:last-child {
   border-bottom: none;
 }
@@ -164,28 +165,24 @@
   background: #F5F6F8;
 }
 
-.profile-row--static {
-  cursor: default;
-}
-
 .profile-row-label {
   flex: 0 0 38%;
   font-size: 14px;
+  font-weight: 400;
   color: #6B7C8D;
 }
 
 .profile-row-value {
   flex: 1;
   font-size: 14px;
-  color: #1A2A3A;
   font-weight: 500;
+  color: #1A2A3A;
   text-align: right;
   word-break: break-word;
 }
 
 .profile-row-value--multi {
   white-space: pre-line;
-  text-align: right;
 }
 
 .profile-row-chevron {
@@ -194,83 +191,47 @@
   line-height: 1;
 }
 
-/* Modal */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(26, 42, 58, 0.45);
+/* Lock toggle under About myVicRoads */
+.profile-lock-row {
+  margin-top: 28px;
+  margin-bottom: 8px;
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-lock-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1.5px solid #E0E4E8;
+  background: #FFFFFF;
+  color: #6B7C8D;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  z-index: 200;
-  padding: 16px;
-  padding-bottom: max(16px, env(safe-area-inset-bottom));
-}
-
-.modal {
-  background: #fff;
-  border-radius: 16px 16px 12px 12px;
-  width: 100%;
-  max-width: 420px;
-  padding: 20px;
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
-}
-
-.modal-title {
-  margin: 0 0 14px;
-  font-size: 17px;
-  font-weight: 600;
-  color: #1A2A3A;
-}
-
-.modal-input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #E0E4E8;
-  border-radius: 10px;
-  background: #F5F6F8;
-  font-size: 16px;
-  color: #1A2A3A;
-  font-family: inherit;
-  outline: none;
-}
-
-.modal-input:focus {
-  border-color: #0D2D6B;
-  background: #fff;
-}
-
-.modal-textarea {
-  resize: vertical;
-  min-height: 96px;
-  line-height: 1.4;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-  justify-content: flex-end;
-}
-
-.btn-primary,
-.btn-secondary {
-  padding: 10px 18px;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
   cursor: pointer;
-  border: none;
-  font-family: inherit;
+  box-shadow: 0 1px 3px rgba(26, 42, 58, 0.08);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
 }
 
-.btn-primary {
-  background: #0D2D6B;
-  color: #fff;
+.profile-lock-btn:active {
+  transform: scale(0.96);
 }
 
-.btn-secondary {
-  background: #F5F6F8;
-  color: #1A2A3A;
-  border: 1px solid #E0E4E8;
+.profile-lock-btn--open {
+  color: #2E7D32;
+  border-color: #B5D9BB;
+  background: #E8F5E9;
+}
+
+
+
+.profile-lock-btn--open + 
+
+.profile-section--first {
+  margin-top: 16px;
 }

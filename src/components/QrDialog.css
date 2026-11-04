@@ -5,7 +5,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  z-index: 300;
+  z-index: 1100;
   padding: 16px;
   padding-bottom: max(16px, env(safe-area-inset-bottom));
 }

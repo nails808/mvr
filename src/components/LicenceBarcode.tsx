@@ -31,10 +31,10 @@ export function LicenceBarcode({ value, className }: LicenceBarcodeProps) {
         format: 'CODE128',
         displayValue: false, // no human-readable numbers under the bars
         margin: 0,
-        width: 1.6,
-        height: 48,
+        width: 1.8,
+        height: 56,
         background: 'transparent',
-        lineColor: '#000000',
+        lineColor: '#0D2D6B',
       });
     } catch {
       // Invalid characters for Code128 — fail silently

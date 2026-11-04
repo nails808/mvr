@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { UserData } from '../data/UserData';
 import './VehiclesScreen.css';
 
@@ -25,7 +26,6 @@ type VehicleField =
   | 'vehicleTransferInDispute'
   | 'vehicleExpiry';
 
-/** Labels match original DemeritScreen.kt / MyVehiclesScreen strings */
 const FIELD_LABELS: Record<VehicleField, string> = {
   vehicleRego: 'Registration number',
   vehicleStatus: 'Status',
@@ -45,7 +45,10 @@ const FIELD_LABELS: Record<VehicleField, string> = {
   vehicleExpiry: 'Expiry',
 };
 
-const DETAIL_FIELDS: VehicleField[] = [
+const ALL_FIELDS: VehicleField[] = [
+  'vehicleRego',
+  'vehicleStatus',
+  'vehicleDescription',
   'vehicleMake',
   'vehicleModel',
   'vehicleYear',
@@ -61,43 +64,78 @@ const DETAIL_FIELDS: VehicleField[] = [
   'vehicleTransferInDispute',
 ];
 
-const EDITABLE_ALL: VehicleField[] = [
-  'vehicleRego',
-  'vehicleStatus',
-  'vehicleDescription',
-  ...DETAIL_FIELDS,
-];
-
 export function MyVehiclesScreen({ userData, onUserDataChange }: MyVehiclesScreenProps) {
-  const [showEdit, setShowEdit] = useState(false);
-  const [draft, setDraft] = useState<Partial<UserData>>({});
+  const unlocked = Boolean(userData.isUnlocked);
+  const [editingField, setEditingField] = useState<VehicleField | null>(null);
+  const [draft, setDraft] = useState('');
 
-  const openEdit = () => {
-    const initial: Partial<UserData> = {};
-    for (const key of EDITABLE_ALL) {
-      initial[key] = userData[key];
-    }
-    setDraft(initial);
-    setShowEdit(true);
+  const openEdit = (key: VehicleField) => {
+    if (!unlocked) return;
+    setDraft(String(userData[key] ?? ''));
+    setEditingField(key);
   };
 
   const saveEdit = () => {
-    onUserDataChange({ ...userData, ...draft });
-    setShowEdit(false);
+    if (!editingField) return;
+    onUserDataChange({
+      ...userData,
+      [editingField]: draft,
+    });
+    setEditingField(null);
   };
+
+  const cancelEdit = () => setEditingField(null);
 
   const statusIsCurrent =
     userData.vehicleStatus.toLowerCase() === 'current' ||
     userData.vehicleStatus.toLowerCase() === 'registered';
 
+  const editModal =
+    editingField &&
+    createPortal(
+      <div
+        className="modal-backdrop"
+        role="presentation"
+        onClick={cancelEdit}
+      >
+        <div
+          className="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="vehicle-edit-title"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="modal-title" id="vehicle-edit-title">
+            {FIELD_LABELS[editingField]}
+          </h3>
+          <input
+            className="modal-input"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                saveEdit();
+              }
+              if (e.key === 'Escape') cancelEdit();
+            }}
+          />
+          <div className="modal-actions">
+            <button type="button" className="btn-secondary" onClick={cancelEdit}>
+              Cancel
+            </button>
+            <button type="button" className="btn-primary" onClick={saveEdit}>
+              Save
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+
   return (
     <div className="vehicles-screen vehicles-screen--detail">
-      <header className="vehicles-header vehicles-header--compact">
-        <button type="button" className="vehicles-edit-btn" onClick={openEdit}>
-          Edit
-        </button>
-      </header>
-
       <section className="vehicle-hero">
         <div className="vehicle-hero__rego">{userData.vehicleRego}</div>
         <div className="vehicle-hero__desc">{userData.vehicleDescription}</div>
@@ -113,59 +151,35 @@ export function MyVehiclesScreen({ userData, onUserDataChange }: MyVehiclesScree
       <section className="vehicles-section">
         <h2 className="vehicles-section-title">Vehicle details</h2>
         <div className="vehicles-card">
-          <div className="vehicles-row">
-            <span className="vehicles-row-label">{FIELD_LABELS.vehicleRego}</span>
-            <span className="vehicles-row-value">{userData.vehicleRego}</span>
-          </div>
-          <div className="vehicles-row">
-            <span className="vehicles-row-label">{FIELD_LABELS.vehicleStatus}</span>
-            <span className="vehicles-row-value">{userData.vehicleStatus}</span>
-          </div>
-          <div className="vehicles-row">
-            <span className="vehicles-row-label">{FIELD_LABELS.vehicleDescription}</span>
-            <span className="vehicles-row-value">{userData.vehicleDescription}</span>
-          </div>
-          {DETAIL_FIELDS.map((key) => (
-            <div key={key} className="vehicles-row">
-              <span className="vehicles-row-label">{FIELD_LABELS[key]}</span>
-              <span className="vehicles-row-value">{userData[key] || '—'}</span>
-            </div>
-          ))}
+          {ALL_FIELDS.map((key) => {
+            const canEdit = unlocked;
+            return (
+              <div
+                key={key}
+                role={canEdit ? 'button' : undefined}
+                tabIndex={canEdit ? 0 : undefined}
+                className={`vehicles-row ${canEdit ? 'vehicles-row--editable' : ''}`}
+                onClick={() => openEdit(key)}
+                onKeyDown={(e) => {
+                  if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    openEdit(key);
+                  }
+                }}
+              >
+                <span className="vehicles-row-label">{FIELD_LABELS[key]}</span>
+                <span className="vehicles-row-value">{userData[key] || '—'}</span>
+                {canEdit && <span className="vehicles-row-chevron">›</span>}
+              </div>
+            );
+          })}
         </div>
+        {!unlocked && (
+          <p className="vehicles-lock-hint">Unlock editing on Profile to change vehicle details.</p>
+        )}
       </section>
 
-      {showEdit && (
-        <div className="modal-backdrop" onClick={() => setShowEdit(false)}>
-          <div className="modal modal--sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-sheet-header">
-              <h3 className="modal-title">Edit Vehicle</h3>
-              <button type="button" className="modal-close" onClick={() => setShowEdit(false)}>
-                ✕
-              </button>
-            </div>
-            <div className="modal-sheet-body">
-              {EDITABLE_ALL.map((key) => (
-                <label key={key} className="edit-field">
-                  <span className="edit-field-label">{FIELD_LABELS[key]}</span>
-                  <input
-                    className="modal-input"
-                    value={String(draft[key] ?? '')}
-                    onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))}
-                  />
-                </label>
-              ))}
-            </div>
-            <div className="modal-actions modal-actions--sticky">
-              <button type="button" className="btn-secondary" onClick={() => setShowEdit(false)}>
-                Cancel
-              </button>
-              <button type="button" className="btn-primary" onClick={saveEdit}>
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {editModal}
     </div>
   );
 }

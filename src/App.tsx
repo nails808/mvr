@@ -58,31 +58,13 @@ function App() {
     setPhotoUri(uri);
   }, []);
 
-  // Stack: digital licence card (Home "My licence" or Licence menu)
-  if (stack === 'viewlicence') {
-    return (
-      <div className="app">
-        <div className="stack-screen">
-          <header className="stack-header">
-            <button type="button" className="stack-back" onClick={handleBack}>
-              ‹ Back
-            </button>
-            <h1>Licence</h1>
-          </header>
-          <div className="stack-scroll">
-            <ViewLicenceScreen
-              userData={userData}
-              photoUri={photoUri}
-              embedded
-              onUserDataChange={handleUserDataChange}
-              onPhotoChange={handlePhotoChange}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  /** Selecting a bottom-nav tab always leaves stack screens */
+  const handleTabSelect = useCallback((next: NavTab) => {
+    setStack(null);
+    setTab(next);
+  }, []);
 
+  // Demerit keeps a simple back header (not requested to change)
   if (stack === 'demerit') {
     return (
       <div className="app">
@@ -101,52 +83,53 @@ function App() {
     );
   }
 
-  if (stack === 'myVehicles') {
-    return (
-      <div className="app">
-        <div className="stack-screen">
-          <header className="stack-header">
-            <button type="button" className="stack-back" onClick={handleBack}>
-              ‹ Back
-            </button>
-            <h1>My registered vehicles</h1>
-          </header>
-          <div className="stack-scroll">
-            <MyVehiclesScreen
-              userData={userData}
-              onUserDataChange={handleUserDataChange}
-            />
-          </div>
-        </div>
-      </div>
+  let content: ReactNode;
+
+  // View licence + My vehicles: no back bar; bottom nav stays visible
+  if (stack === 'viewlicence') {
+    content = (
+      <ViewLicenceScreen
+        userData={userData}
+        photoUri={photoUri}
+        embedded
+        onUserDataChange={handleUserDataChange}
+        onPhotoChange={handlePhotoChange}
+      />
     );
+  } else if (stack === 'myVehicles') {
+    content = (
+      <MyVehiclesScreen userData={userData} onUserDataChange={handleUserDataChange} />
+    );
+  } else {
+    switch (tab) {
+      case 'Home':
+        content = <HomeScreen userData={userData} onNavigate={handleNavigate} />;
+        break;
+      case 'Vehicles':
+        content = <VehiclesScreen onNavigate={handleNavigate} />;
+        break;
+      case 'Licence':
+        content = <LicenceScreen onNavigate={handleNavigate} />;
+        break;
+      case 'Payments':
+        content = <PaymentsScreen />;
+        break;
+      case 'Profile':
+        content = (
+          <ProfileScreen
+            userData={userData}
+            photoUri={photoUri}
+            onUserDataChange={handleUserDataChange}
+            onPhotoChange={handlePhotoChange}
+          />
+        );
+        break;
+    }
   }
 
-  let content: ReactNode;
-  switch (tab) {
-    case 'Home':
-      content = <HomeScreen userData={userData} onNavigate={handleNavigate} />;
-      break;
-    case 'Vehicles':
-      content = <VehiclesScreen onNavigate={handleNavigate} />;
-      break;
-    case 'Licence':
-      content = <LicenceScreen onNavigate={handleNavigate} />;
-      break;
-    case 'Payments':
-      content = <PaymentsScreen />;
-      break;
-    case 'Profile':
-      content = (
-        <ProfileScreen
-          userData={userData}
-          photoUri={photoUri}
-          onUserDataChange={handleUserDataChange}
-          onPhotoChange={handlePhotoChange}
-        />
-      );
-      break;
-  }
+  // Highlight Licence / Vehicles tab while viewing those stack screens
+  const navActive: NavTab =
+    stack === 'viewlicence' ? 'Licence' : stack === 'myVehicles' ? 'Vehicles' : tab;
 
   return (
     <div className="app">
@@ -156,7 +139,7 @@ function App() {
         </div>
       )}
       <main className="app-main">{content}</main>
-      <BottomNav active={tab} onSelect={setTab} />
+      <BottomNav active={navActive} onSelect={handleTabSelect} />
     </div>
   );
 }

@@ -1,7 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { createPortal } from 'react-dom';
+import QRCode from 'qrcode';
 import type { UserData } from '../data/UserData';
-import { HologramOverlay } from '../components/HologramOverlay';
-import { QrDialog } from '../components/QrDialog';
+import {
+  createSession,
+  isScanned,
+  type CreateSessionResult,
+} from '../data/VerificationRepository';
 import { LicenceBarcode } from '../components/LicenceBarcode';
 import { LICENCE_TABS, type LicenceTab } from '../components/LicenceTab';
 import vlogo from '../assets/vlogo_nobg.png';
@@ -16,170 +21,281 @@ interface ViewLicenceScreenProps {
   onPhotoChange?: (uri: string | null) => void;
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="lic-detail-row">
-      <span className="lic-detail-label">{label}</span>
-      <span className="lic-detail-value">{value || '—'}</span>
-    </div>
-  );
-}
+type LicenceEditKey = keyof Pick<
+  UserData,
+  | 'firstName'
+  | 'lastName'
+  | 'dob'
+  | 'address'
+  | 'licenceNumber'
+  | 'licenceType'
+  | 'proficiency'
+  | 'licenceStatus'
+  | 'issueDate'
+  | 'licenceExpiry'
+  | 'conditions'
+  | 'cardNumber'
+>;
 
-function CardNumberDetailRow({ value, revealed, onToggle }: {
-  value: string;
-  revealed: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div className="lic-detail-row">
-      <span className="lic-detail-label">Card number</span>
-      <span className="lic-detail-value lic-detail-value--sensitive">
-        <span>{revealed ? value || '—' : '*******'}</span>
-        <button
-          type="button"
-          className="lic-detail-visibility"
-          onClick={onToggle}
-          aria-label={revealed ? 'Hide card number' : 'Show card number'}
-          title={revealed ? 'Hide card number' : 'Show card number'}
-        >
-          {revealed ? (
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M2.1 12s3.6-6 9.9-6 9.9 6 9.9 6-3.6 6-9.9 6-9.9-6-9.9-6Z" />
-              <circle cx="12" cy="12" r="2.6" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m3 3 18 18M10.6 6.2C11.1 6.1 11.5 6 12 6c6.3 0 9.9 6 9.9 6a17.2 17.2 0 0 1-3.1 3.5M6.2 6.9C3.8 8.6 2.1 12 2.1 12s3.6 6 9.9 6c1.5 0 2.8-.3 3.9-.8" />
-            </svg>
-          )}
-        </button>
-      </span>
-    </div>
-  );
-}
+type QrPhase = 'hidden' | 'loading' | 'ready' | 'verified' | 'expired' | 'error';
 
-/** Rough age check from DOB strings like "01 Jan 1990" */
 function isOver18(dob: string): boolean {
   const d = Date.parse(dob);
   if (Number.isNaN(d)) return true;
-  const age = (Date.now() - d) / (365.25 * 24 * 3600 * 1000);
-  return age >= 18;
+  return (Date.now() - d) / (365.25 * 24 * 3600 * 1000) >= 18;
+}
+
+function formatCountdown(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
 export function ViewLicenceScreen({
   userData,
   photoUri,
-  embedded,
-  onBack,
+  onUserDataChange,
+  onPhotoChange,
 }: ViewLicenceScreenProps) {
   const [tab, setTab] = useState<LicenceTab>('Licence');
-  const [showConsent, setShowConsent] = useState(false);
-  const [showQr, setShowQr] = useState(false);
-  const [showCardNumber, setShowCardNumber] = useState(false);
+  const [editing, setEditing] = useState<{ key: LicenceEditKey; label: string } | null>(null);
+  const [draft, setDraft] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  const fullName = `${userData.firstName} ${userData.lastName}`.toUpperCase();
-  const isLicenced = userData.licenceStatus.toLowerCase().includes('licen') &&
-    !userData.licenceStatus.toLowerCase().includes('unlicen');
+  // QR flow (picture 1 → 2 → 3)
+  const [qrPhase, setQrPhase] = useState<QrPhase>('hidden');
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [remainingMs, setRemainingMs] = useState(0);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [fullscreenQr, setFullscreenQr] = useState(false);
+  const sessionRef = useRef<CreateSessionResult | null>(null);
+  const pollRef = useRef<number | null>(null);
+  const tickRef = useRef<number | null>(null);
+
+  const unlocked = userData.isUnlocked;
+  const displayName = `${userData.firstName} ${userData.lastName}`.trim();
   const over18 = isOver18(userData.dob);
 
-  const startVerify = () => setShowConsent(true);
-  const acceptConsent = () => {
-    setShowConsent(false);
-    setShowQr(true);
+  const clearTimers = () => {
+    if (pollRef.current) window.clearInterval(pollRef.current);
+    if (tickRef.current) window.clearInterval(tickRef.current);
+    pollRef.current = null;
+    tickRef.current = null;
   };
 
-  return (
-    <div className={`view-licence ${embedded ? 'view-licence--embedded' : ''}`}>
-      {!embedded && (
-        <header className="view-licence-topbar">
-          {onBack && (
-            <button type="button" className="view-licence-back" onClick={onBack}>
-              ‹ Back
-            </button>
+  useEffect(() => () => clearTimers(), []);
+
+  const revealQr = async () => {
+    clearTimers();
+    setQrPhase('loading');
+    setErrorMsg('');
+    setQrDataUrl(null);
+    try {
+      const session = await createSession(userData, photoUri);
+      sessionRef.current = session;
+      const dataUrl = await QRCode.toDataURL(session.verifyUrl, {
+        width: 320,
+        margin: 1,
+        errorCorrectionLevel: 'M',
+        color: { dark: '#000000', light: '#FFFFFF' },
+      });
+      setQrDataUrl(dataUrl);
+      setRemainingMs(session.expiresAt - Date.now());
+      setQrPhase('ready');
+
+      tickRef.current = window.setInterval(() => {
+        const left = (sessionRef.current?.expiresAt ?? 0) - Date.now();
+        setRemainingMs(left);
+        if (left <= 0) {
+          setQrPhase((p) => (p === 'verified' ? p : 'expired'));
+          clearTimers();
+        }
+      }, 250);
+
+      pollRef.current = window.setInterval(async () => {
+        const id = sessionRef.current?.sessionId;
+        if (!id) return;
+        if (await isScanned(id)) {
+          setQrPhase('verified');
+          clearTimers();
+        }
+      }, 2000);
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : 'Could not create verification session');
+      setQrPhase('error');
+    }
+  };
+
+  const openEdit = (key: LicenceEditKey, label: string) => {
+    if (!unlocked || !onUserDataChange) return;
+    setDraft(String(userData[key] ?? ''));
+    setEditing({ key, label });
+  };
+
+  const saveEdit = () => {
+    if (!editing || !onUserDataChange) return;
+    onUserDataChange({ ...userData, [editing.key]: draft });
+    setEditing(null);
+  };
+
+  const onPhotoFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onPhotoChange) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') onPhotoChange(reader.result);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const DetailRow = ({
+    label,
+    value,
+    field,
+  }: {
+    label: string;
+    value: string;
+    field?: LicenceEditKey;
+  }) => {
+    const canEdit = unlocked && field && onUserDataChange;
+    if (canEdit) {
+      return (
+        <button
+          type="button"
+          className="lic-detail-row lic-detail-row--editable"
+          onClick={() => openEdit(field, label)}
+        >
+          <span className="lic-detail-label">{label}</span>
+          <span className="lic-detail-value">{value || '—'}</span>
+          <span className="lic-detail-chevron">›</span>
+        </button>
+      );
+    }
+    return (
+      <div className="lic-detail-row">
+        <span className="lic-detail-label">{label}</span>
+        <span className="lic-detail-value">{value || '—'}</span>
+      </div>
+    );
+  };
+
+  const photoEl = (
+    <>
+      {unlocked && onPhotoChange ? (
+        <label className="dl-photo-btn dl-photo-btn--editable">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="dl-photo-input"
+            onChange={onPhotoFile}
+          />
+          {photoUri ? (
+            <img src={photoUri} alt="Licence photo" className="dl-photo" />
+          ) : (
+            <div className="dl-photo dl-photo--empty">
+              <span>
+                Tap to
+                <br />
+                add photo
+              </span>
+            </div>
           )}
-          <h1>Licence</h1>
-        </header>
-      )}
-
-      {!isLicenced && (
-        <div className="licence-warning" role="alert">
-          ⚠️ One or more of these licences or permits is not current. It is illegal to drive or
-          ride under this licence or permit.
+        </label>
+      ) : photoUri ? (
+        <img src={photoUri} alt="Licence photo" className="dl-photo" />
+      ) : (
+        <div className="dl-photo dl-photo--empty">
+          <span>No photo</span>
         </div>
       )}
+    </>
+  );
 
-      {/* Digital card — original labels: DRIVER LICENCE, Victoria Australia */}
-      <div className="licence-card">
-        <HologramOverlay />
-
-        <div className="licence-card__header">
-          <img src={vlogo} alt="VicRoads" className="licence-card__logo" />
-          <div className="licence-card__header-text">
-            <div className="licence-card__title">DRIVER LICENCE</div>
-            <div className="licence-card__subtitle">Victoria Australia</div>
-          </div>
-          <div
-            className={`licence-card__status-pill ${
-              isLicenced ? 'licence-card__status-pill--ok' : 'licence-card__status-pill--bad'
-            }`}
-          >
-            {userData.licenceStatus}
-          </div>
+  return (
+    <div className="view-licence view-licence--embedded dl">
+      {/* Picture 1/2 header */}
+      <header className="dl-header">
+        <div className="dl-header__text">
+          <div className="dl-header__title">Driver licence</div>
+          <div className="dl-header__sub">Victoria Australia</div>
         </div>
+        <img src={vlogo} alt="VicRoads" className="dl-header__logo" />
+      </header>
 
-        <div className="licence-card__body">
-          <div className="licence-card__photo-col">
-            {photoUri ? (
-              <img src={photoUri} alt="Victorian driver licence photo" className="licence-card__photo" />
-            ) : (
-              <div className="licence-card__photo licence-card__photo--empty">
-                <span>
-                  Tap to
-                  <br />
-                  add photo
-                </span>
+      {/* Mint band: photo + consent OR QR */}
+      <section className="dl-band">
+        <div className="dl-band__inner">
+          <div className="dl-band__photo">{photoEl}</div>
+
+          <div className="dl-band__panel">
+            {qrPhase === 'hidden' && (
+              <div className="dl-consent">
+                <p className="dl-consent__lead">
+                  Presenting a QR code allows your driver licence information to be accessed and
+                  shared.
+                </p>
+                <p className="dl-consent__ask">Do you consent to share your information?</p>
+                <button type="button" className="dl-consent__btn" onClick={() => void revealQr()}>
+                  Reveal QR code
+                </button>
               </div>
             )}
-            <div className="licence-card__card-no">Card number {userData.cardNumber}</div>
-          </div>
 
-          <div className="licence-card__info-col">
-            <div className="licence-card__name">{fullName}</div>
-            <div className="licence-card__field">
-              <span className="licence-card__field-label">Licence number</span>
-              <span className="licence-card__field-value">{userData.licenceNumber}</span>
-            </div>
-            <div className="licence-card__field">
-              <span className="licence-card__field-label">Licence type</span>
-              <span className="licence-card__field-value">{userData.licenceType}</span>
-            </div>
-            <div className="licence-card__field">
-              <span className="licence-card__field-label">Licence expiry</span>
-              <span className="licence-card__field-value">{userData.licenceExpiry}</span>
-            </div>
-            <div className="licence-card__field">
-              <span className="licence-card__field-label">Date of birth</span>
-              <span className="licence-card__field-value">{userData.dob}</span>
-            </div>
+            {qrPhase === 'loading' && (
+              <div className="dl-qr-panel dl-qr-panel--status">
+                <div className="dl-spinner" />
+                <p>Generating secure QR code…</p>
+              </div>
+            )}
+
+            {qrPhase === 'error' && (
+              <div className="dl-qr-panel dl-qr-panel--status">
+                <p className="dl-error">{errorMsg}</p>
+                <button type="button" className="dl-consent__btn" onClick={() => void revealQr()}>
+                  Try again
+                </button>
+              </div>
+            )}
+
+            {(qrPhase === 'ready' || qrPhase === 'verified' || qrPhase === 'expired') &&
+              qrDataUrl && (
+                <button
+                  type="button"
+                  className="dl-qr-panel"
+                  onClick={() => setFullscreenQr(true)}
+                  aria-label="Open QR code full screen"
+                >
+                  <div className="dl-qr-panel__label">
+                    Check licence
+                    {qrPhase === 'verified' && <span className="dl-qr-panel__badge">✓</span>}
+                    {qrPhase === 'expired' && <span className="dl-qr-panel__badge dl-qr-panel__badge--warn">!</span>}
+                  </div>
+                  <img src={qrDataUrl} alt="Verification QR code" className="dl-qr-panel__img" />
+                  <div className="dl-qr-panel__expires">
+                    {qrPhase === 'expired'
+                      ? 'QR expired'
+                      : qrPhase === 'verified'
+                        ? 'Verified'
+                        : `QR expires ${formatCountdown(remainingMs)}`}
+                  </div>
+                </button>
+              )}
           </div>
         </div>
+      </section>
 
-        <div className="licence-card__footer">
-          <span>
-            {userData.proficiency} · {userData.conditions}
-          </span>
-        </div>
-      </div>
-
-      {/* Sub-tabs */}
-      <div className="licence-tabs" role="tablist">
+      {/* Tabs — picture 2 */}
+      <div className="dl-tabs" role="tablist">
         {LICENCE_TABS.map((t) => (
           <button
             key={t}
             type="button"
             role="tab"
             aria-selected={tab === t}
-            className={`licence-tabs__btn ${tab === t ? 'licence-tabs__btn--active' : ''}`}
+            className={`dl-tabs__btn ${tab === t ? 'dl-tabs__btn--active' : ''}`}
             onClick={() => setTab(t)}
           >
             {t}
@@ -187,36 +303,45 @@ export function ViewLicenceScreen({
         ))}
       </div>
 
-      <div className="licence-panel" role="tabpanel">
+      <div className="dl-panel" role="tabpanel">
         {tab === 'Licence' && (
           <>
-            <div className="lic-section-header">Car licence details</div>
-            <DetailRow label="Licence number" value={userData.licenceNumber} />
-            <DetailRow label="Licence type" value={userData.licenceType} />
-            <DetailRow label="Proficiency" value={userData.proficiency} />
-            <DetailRow label="Licence status" value={userData.licenceStatus} />
-            <DetailRow label="Issue date" value={userData.issueDate} />
-            <DetailRow label="Licence expiry" value={userData.licenceExpiry} />
-            <DetailRow label="Conditions" value={userData.conditions} />
-            <div className="lic-section-header">Other details</div>
-            <CardNumberDetailRow
-              value={userData.cardNumber}
-              revealed={showCardNumber}
-              onToggle={() => setShowCardNumber((visible) => !visible)}
-            />
+            <h2 className="dl-name">{displayName}</h2>
+            <div className="dl-grid">
+              <div className="dl-grid__cell">
+                <div className="dl-grid__label">Licence number</div>
+                <div className="dl-grid__value">{userData.licenceNumber}</div>
+              </div>
+              <div className="dl-grid__cell">
+                <div className="dl-grid__label">Licence expiry</div>
+                <div className="dl-grid__value">{userData.licenceExpiry}</div>
+              </div>
+              <div className="dl-grid__cell">
+                <div className="dl-grid__label">Date of birth</div>
+                <div className="dl-grid__value">{userData.dob}</div>
+              </div>
+              <div className="dl-grid__cell">
+                <div className="dl-grid__label">Licence type</div>
+                <div className="dl-grid__value">{userData.licenceType}</div>
+              </div>
+            </div>
+            <div className="lic-section-header">Driver licence details</div>
+            <DetailRow label="Licence status" value={userData.licenceStatus} field="licenceStatus" />
+            <DetailRow label="Proficiency" value={userData.proficiency} field="proficiency" />
+            <DetailRow label="Issue date" value={userData.issueDate} field="issueDate" />
+            <DetailRow label="Conditions" value={userData.conditions} field="conditions" />
+            <DetailRow label="Card number" value={userData.cardNumber} field="cardNumber" />
           </>
         )}
 
         {tab === 'Identity' && (
           <>
-            <DetailRow label="First name" value={userData.firstName} />
-            <DetailRow label="Last name" value={userData.lastName} />
-            <DetailRow label="Date of birth" value={userData.dob} />
-            <DetailRow label="Address" value={userData.address} />
-            <DetailRow label="Licence number" value={userData.licenceNumber} />
-            <p className="licence-panel-note">
-              Full name, birth date and address — suitable for identity verification.
-            </p>
+            <h2 className="dl-name">{displayName}</h2>
+            <DetailRow label="First name" value={userData.firstName} field="firstName" />
+            <DetailRow label="Last name" value={userData.lastName} field="lastName" />
+            <DetailRow label="Date of birth" value={userData.dob} field="dob" />
+            <DetailRow label="Address" value={userData.address} field="address" />
+            <DetailRow label="Licence number" value={userData.licenceNumber} field="licenceNumber" />
           </>
         )}
 
@@ -227,67 +352,80 @@ export function ViewLicenceScreen({
               <div className="age-highlight__value">{over18 ? 'Over 18' : 'Under 18'}</div>
               <div className="age-highlight__dob">Date of birth · {userData.dob}</div>
             </div>
-            <DetailRow
-              label="Full name"
-              value={`${userData.firstName} ${userData.lastName}`}
-            />
-            <DetailRow label="Licence status" value={userData.licenceStatus} />
+            <DetailRow label="First name" value={userData.firstName} field="firstName" />
+            <DetailRow label="Last name" value={userData.lastName} field="lastName" />
+            <DetailRow label="Licence status" value={userData.licenceStatus} field="licenceStatus" />
           </>
         )}
       </div>
 
-      <div className="licence-actions">
-        <button type="button" className="licence-verify-btn" onClick={startVerify}>
-          Verify Licence
-        </button>
-      </div>
-
-      {/* Victoria Police barcode — displayed below Verify Licence at full width */}
-      <div className="licence-barcode-block">
+      {/* Barcode replaces Verify Licence button */}
+      <div className="licence-barcode-full">
         <LicenceBarcode value={userData.licenceNumber} />
       </div>
 
-      {/* Consent sheet — original copy before QR */}
-      {showConsent && (
-        <div className="modal-backdrop" onClick={() => setShowConsent(false)}>
-          <div className="modal qr-consent-modal" onClick={(e) => e.stopPropagation()}>
-            <h3 className="modal-title">Do you consent to share your information?</h3>
-            <p className="consent-lead">
-              Presenting a QR code allows your driver licence information to be scanned and shared.
-            </p>
-            <p className="consent-body">
-              By presenting this QR code you consent to share some or all of your driver licence
-              information, including with scanners, venues and law enforcement agencies. They may
-              retain your information in accordance with their business practices and legal
-              requirements.
-            </p>
-            <p className="consent-sharing-title">You&apos;re sharing:</p>
-            <ul className="consent-list">
-              <li>Full name, birth date and address</li>
-              <li>Licence number, type and expiry date</li>
-              <li>Licence status</li>
-              <li>Proficiency</li>
-              <li>Victorian driver licence photo</li>
-            </ul>
-            <div className="modal-actions consent-actions">
-              <button type="button" className="btn-secondary" onClick={() => setShowConsent(false)}>
-                Cancel
+      {/* Fullscreen QR — picture 3 */}
+      {fullscreenQr &&
+        qrDataUrl &&
+        createPortal(
+          <div className="dl-fs" role="dialog" aria-modal>
+            <header className="dl-fs__header">
+              <h2 className="dl-fs__title">Verify Licence</h2>
+              <button type="button" className="dl-fs__close" onClick={() => setFullscreenQr(false)}>
+                Close
               </button>
-              <button type="button" className="btn-primary" onClick={acceptConsent}>
-                Reveal QR code
-              </button>
+            </header>
+            <div className="dl-fs__body">
+              <img src={qrDataUrl} alt="Verification QR code" className="dl-fs__qr" />
+              <p className="dl-fs__expires">
+                {qrPhase === 'expired'
+                  ? 'QR expired'
+                  : `QR expires ${formatCountdown(remainingMs)}`}
+              </p>
+              <p className="dl-fs__legal">
+                By presenting this QR code you consent to share some or all of your driver licence
+                information, including with economies, venues and law enforcement agencies. They may
+                retain your information in accordance with their business practices and legal
+                requirements.
+              </p>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
-      {showQr && (
-        <QrDialog
-          userData={userData}
-          photoUri={photoUri}
-          onClose={() => setShowQr(false)}
-        />
-      )}
+      {editing &&
+        createPortal(
+          <div className="modal-backdrop" onClick={() => setEditing(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <h3 className="modal-title">{editing.label}</h3>
+              {editing.key === 'address' ? (
+                <textarea
+                  className="modal-input modal-textarea"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  rows={4}
+                  autoFocus
+                />
+              ) : (
+                <input
+                  className="modal-input"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  autoFocus
+                />
+              )}
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setEditing(null)}>
+                  Cancel
+                </button>
+                <button type="button" className="btn-primary" onClick={saveEdit}>
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

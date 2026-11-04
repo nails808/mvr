@@ -194,3 +194,58 @@
   justify-content: flex-end;
   margin-bottom: 8px;
 }
+
+
+
+
+
+.vehicles-row--editable {
+  cursor: pointer;
+}
+
+.vehicles-row--editable:active {
+  background: #F5F6F8;
+}
+
+.vehicles-row-chevron {
+  color: #8A9AB0;
+  font-size: 18px;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+
+.vehicles-row--editable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.vehicles-row--editable:active {
+  background: #F5F6F8;
+}
+
+.vehicles-row-chevron {
+  color: #8A9AB0;
+  font-size: 18px;
+  margin-left: 4px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.vehicles-lock-hint {
+  margin: 12px 4px 0;
+  font-size: 12px;
+  color: #8A9AB0;
+  line-height: 1.35;
+}
+
+/* Ensure flex layout stays intact on interactive rows */
+.vehicles-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid #E8EAED;
+  box-sizing: border-box;
+  width: 100%;
+}
