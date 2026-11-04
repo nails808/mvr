@@ -52,6 +52,60 @@ function formatCountdown(ms: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+/** Parse common AU date strings; returns local Date at start of day or null */
+function parseFlexibleDate(raw: string): Date | null {
+  const s = (raw || '').trim();
+  if (!s) return null;
+  // DD/MM/YYYY
+  const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) {
+    return new Date(Number(dmy[3]), Number(dmy[2]) - 1, Number(dmy[1]));
+  }
+  // YYYY-MM-DD
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+  }
+  const t = Date.parse(s);
+  if (!Number.isNaN(t)) {
+    const d = new Date(t);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+  return null;
+}
+
+/**
+ * Current if expiry is strictly after today (end of expiry day still counts as valid
+ * only until start of that day? User said: past or today's date → Expired.
+ * So valid only when expiry date > today.
+ */
+function isLicenceCurrentByExpiry(expiry: string): boolean {
+  const exp = parseFlexibleDate(expiry);
+  if (!exp) {
+    // fall back to status text if we can't parse
+    return true;
+  }
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return exp.getTime() > today.getTime();
+}
+
+function signatureText(firstName: string, lastName: string): string {
+  const f = (firstName || '').trim().charAt(0);
+  const l = (lastName || '').trim().charAt(0);
+  // First + last initials in a script font (e.g. "A. S.")
+  if (f && l) return `${f}. ${l}.`;
+  if (f) return `${f}.`;
+  if (l) return `${l}.`;
+  return '';
+}
+
+function maskCardNumber(value: string): string {
+  const digits = (value || '').replace(/\s/g, '');
+  if (!digits) return '•••••••';
+  return '•'.repeat(Math.max(digits.length, 7));
+}
+
 export function ViewLicenceScreen({
   userData,
   photoUri,
@@ -61,9 +115,9 @@ export function ViewLicenceScreen({
   const [tab, setTab] = useState<LicenceTab>('Licence');
   const [editing, setEditing] = useState<{ key: LicenceEditKey; label: string } | null>(null);
   const [draft, setDraft] = useState('');
+  const [cardRevealed, setCardRevealed] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // QR flow (picture 1 → 2 → 3)
   const [qrPhase, setQrPhase] = useState<QrPhase>('hidden');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [remainingMs, setRemainingMs] = useState(0);
@@ -74,8 +128,10 @@ export function ViewLicenceScreen({
   const tickRef = useRef<number | null>(null);
 
   const unlocked = userData.isUnlocked;
-  const displayName = `${userData.firstName} ${userData.lastName}`.trim();
+  const displayName = `${userData.firstName} ${userData.lastName}`.trim().toUpperCase();
   const over18 = isOver18(userData.dob);
+  const licenceCurrent = isLicenceCurrentByExpiry(userData.licenceExpiry);
+  const sig = signatureText(userData.firstName, userData.lastName);
 
   const clearTimers = () => {
     if (pollRef.current) window.clearInterval(pollRef.current);
@@ -216,7 +272,6 @@ export function ViewLicenceScreen({
 
   return (
     <div className="view-licence view-licence--embedded dl">
-      {/* Picture 1/2 header */}
       <header className="dl-header">
         <div className="dl-header__text">
           <div className="dl-header__title">Driver licence</div>
@@ -225,11 +280,9 @@ export function ViewLicenceScreen({
         <img src={vlogo} alt="VicRoads" className="dl-header__logo" />
       </header>
 
-      {/* Mint band: photo + consent OR QR */}
       <section className="dl-band">
         <div className="dl-band__inner">
           <div className="dl-band__photo">{photoEl}</div>
-
           <div className="dl-band__panel">
             {qrPhase === 'hidden' && (
               <div className="dl-consent">
@@ -243,14 +296,12 @@ export function ViewLicenceScreen({
                 </button>
               </div>
             )}
-
             {qrPhase === 'loading' && (
               <div className="dl-qr-panel dl-qr-panel--status">
                 <div className="dl-spinner" />
                 <p>Generating secure QR code…</p>
               </div>
             )}
-
             {qrPhase === 'error' && (
               <div className="dl-qr-panel dl-qr-panel--status">
                 <p className="dl-error">{errorMsg}</p>
@@ -259,7 +310,6 @@ export function ViewLicenceScreen({
                 </button>
               </div>
             )}
-
             {(qrPhase === 'ready' || qrPhase === 'verified' || qrPhase === 'expired') &&
               qrDataUrl && (
                 <button
@@ -271,7 +321,9 @@ export function ViewLicenceScreen({
                   <div className="dl-qr-panel__label">
                     Check licence
                     {qrPhase === 'verified' && <span className="dl-qr-panel__badge">✓</span>}
-                    {qrPhase === 'expired' && <span className="dl-qr-panel__badge dl-qr-panel__badge--warn">!</span>}
+                    {qrPhase === 'expired' && (
+                      <span className="dl-qr-panel__badge dl-qr-panel__badge--warn">!</span>
+                    )}
                   </div>
                   <img src={qrDataUrl} alt="Verification QR code" className="dl-qr-panel__img" />
                   <div className="dl-qr-panel__expires">
@@ -287,56 +339,140 @@ export function ViewLicenceScreen({
         </div>
       </section>
 
-      {/* Tabs — picture 2 */}
-      <div className="dl-tabs" role="tablist">
-        {LICENCE_TABS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            role="tab"
-            aria-selected={tab === t}
-            className={`dl-tabs__btn ${tab === t ? 'dl-tabs__btn--active' : ''}`}
-            onClick={() => setTab(t)}
-          >
-            {t}
-          </button>
-        ))}
+      {/* Segmented tabs — centred, picture 1 style */}
+      <div className="dl-seg-wrap">
+        <div className="dl-seg" role="tablist">
+          {LICENCE_TABS.map((t) => (
+            <button
+              key={t}
+              type="button"
+              role="tab"
+              aria-selected={tab === t}
+              className={`dl-seg__btn ${tab === t ? 'dl-seg__btn--active' : ''}`}
+              onClick={() => setTab(t)}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="dl-panel" role="tabpanel">
         {tab === 'Licence' && (
-          <>
-            <h2 className="dl-name">{displayName}</h2>
-            <div className="dl-grid">
-              <div className="dl-grid__cell">
-                <div className="dl-grid__label">Licence number</div>
-                <div className="dl-grid__value">{userData.licenceNumber}</div>
+          <div className="lic-sheet">
+            <h2 className="lic-sheet__name">{displayName}</h2>
+
+            <div className="lic-sheet__grid">
+              <div className="lic-sheet__cell">
+                <div className="lic-sheet__label">Licence number</div>
+                <div className="lic-sheet__value">{userData.licenceNumber}</div>
               </div>
-              <div className="dl-grid__cell">
-                <div className="dl-grid__label">Licence expiry</div>
-                <div className="dl-grid__value">{userData.licenceExpiry}</div>
+              <div className="lic-sheet__cell">
+                <div className="lic-sheet__label">Expiry</div>
+                <div className="lic-sheet__value">{userData.licenceExpiry}</div>
               </div>
-              <div className="dl-grid__cell">
-                <div className="dl-grid__label">Date of birth</div>
-                <div className="dl-grid__value">{userData.dob}</div>
+              <div className="lic-sheet__cell">
+                <div className="lic-sheet__label">Licence type</div>
+                <div className="lic-sheet__value">{userData.licenceType}</div>
               </div>
-              <div className="dl-grid__cell">
-                <div className="dl-grid__label">Licence type</div>
-                <div className="dl-grid__value">{userData.licenceType}</div>
+              <div className="lic-sheet__cell">
+                <div className="lic-sheet__label">Date of birth</div>
+                <div className="lic-sheet__value">{userData.dob}</div>
               </div>
             </div>
-            <div className="lic-section-header">Driver licence details</div>
-            <DetailRow label="Licence status" value={userData.licenceStatus} field="licenceStatus" />
-            <DetailRow label="Proficiency" value={userData.proficiency} field="proficiency" />
-            <DetailRow label="Issue date" value={userData.issueDate} field="issueDate" />
-            <DetailRow label="Conditions" value={userData.conditions} field="conditions" />
-            <DetailRow label="Card number" value={userData.cardNumber} field="cardNumber" />
-          </>
+
+            <div className="lic-sheet__block">
+              <div className="lic-sheet__label">Address</div>
+              <div className="lic-sheet__value lic-sheet__value--multi">
+                {(userData.address || '—').toUpperCase()}
+              </div>
+            </div>
+
+            <div className="lic-sheet__block">
+              <div className="lic-sheet__label">Signature</div>
+              <div className="lic-signature" aria-label={`Signature of ${displayName}`}>
+                {sig}
+              </div>
+            </div>
+
+            <div className="lic-sheet__section-bar">Car licence details</div>
+
+            <div className="lic-sheet__block">
+              <div className="lic-sheet__label">Licence status</div>
+              <div
+                className={`lic-status ${licenceCurrent ? 'lic-status--current' : 'lic-status--expired'}`}
+              >
+                <span className="lic-status__icon" aria-hidden>
+                  {licenceCurrent ? '✓' : '✕'}
+                </span>
+                <span className="lic-status__text">
+                  {licenceCurrent ? 'Current' : 'Expired'}
+                </span>
+              </div>
+            </div>
+
+            <div className="lic-sheet__block">
+              <div className="lic-sheet__label">Proficiency</div>
+              <div className="lic-sheet__value">{userData.proficiency || '—'}</div>
+            </div>
+            <div className="lic-sheet__block">
+              <div className="lic-sheet__label">Issue date</div>
+              <div className="lic-sheet__value">{userData.issueDate || '—'}</div>
+            </div>
+            <div className="lic-sheet__block">
+              <div className="lic-sheet__label">Expiry</div>
+              <div className="lic-sheet__value">{userData.licenceExpiry || '—'}</div>
+            </div>
+
+            <div className="lic-sheet__section-bar">Other details</div>
+
+            <div className="lic-sheet__block">
+              <div className="lic-sheet__label">Conditions</div>
+              <div className="lic-sheet__value lic-sheet__value--multi">
+                {userData.conditions || '—'}
+              </div>
+            </div>
+
+            <div className="lic-sheet__block lic-sheet__card-row">
+              <div className="lic-sheet__card-main">
+                <div className="lic-sheet__label">Card number</div>
+                <div className="lic-sheet__value lic-sheet__card-num">
+                  {cardRevealed
+                    ? userData.cardNumber || '—'
+                    : maskCardNumber(userData.cardNumber)}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="lic-eye"
+                onClick={() => setCardRevealed((v) => !v)}
+                aria-label={cardRevealed ? 'Hide card number' : 'Show card number'}
+                aria-pressed={cardRevealed}
+              >
+                {cardRevealed ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            <div className="lic-sheet__barcode">
+              <div className="lic-sheet__label">Victoria Police barcode</div>
+              <LicenceBarcode value={userData.licenceNumber} />
+            </div>
+          </div>
         )}
 
         {tab === 'Identity' && (
           <>
-            <h2 className="dl-name">{displayName}</h2>
+            <h2 className="lic-sheet__name">{displayName}</h2>
             <DetailRow label="First name" value={userData.firstName} field="firstName" />
             <DetailRow label="Last name" value={userData.lastName} field="lastName" />
             <DetailRow label="Date of birth" value={userData.dob} field="dob" />
@@ -354,17 +490,11 @@ export function ViewLicenceScreen({
             </div>
             <DetailRow label="First name" value={userData.firstName} field="firstName" />
             <DetailRow label="Last name" value={userData.lastName} field="lastName" />
-            <DetailRow label="Licence status" value={userData.licenceStatus} field="licenceStatus" />
+            <DetailRow label="Licence status" value={licenceCurrent ? 'Current' : 'Expired'} />
           </>
         )}
       </div>
 
-      {/* Barcode replaces Verify Licence button */}
-      <div className="licence-barcode-full">
-        <LicenceBarcode value={userData.licenceNumber} />
-      </div>
-
-      {/* Fullscreen QR — picture 3 */}
       {fullscreenQr &&
         qrDataUrl &&
         createPortal(
