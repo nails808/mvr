@@ -1,3 +1,84 @@
+
+/* —— View details top bar (picture 1) —— */
+.vd-top {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  padding: 12px 8px 4px;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.vd-top__back {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  font-size: 28px;
+  line-height: 1;
+  color: #1a1a1a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+}
+
+.vd-top__title {
+  margin: 0;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.vd-top__spacer {
+  width: 44px;
+  height: 1px;
+}
+
+.vd-refreshed {
+  margin: 0;
+  padding: 4px 16px 14px;
+  text-align: center;
+  font-size: 13px;
+  color: #6b7c8d;
+  background: #ffffff;
+}
+
+.lic-sheet--age {
+  padding: 8px 0 24px;
+}
+
+.lic-sheet--age .lic-sheet__label {
+  margin-bottom: 10px;
+}
+
+.lic-sheet--age .lic-status {
+  font-size: 20px;
+}
+
+.lic-sheet--age .lic-status__icon {
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+}
+
+.lic-sheet__block--sig {
+  border-bottom: none;
+}
+
+.lic-sheet__block--sig .lic-signature {
+  margin-top: 8px;
+  padding: 12px 4px 16px;
+  font-size: 42px;
+}
+
+/* Full height main without bottom nav */
 /* Digital licence — matches VicRoads digital licence reference layouts */
 
 .view-licence {
@@ -726,7 +807,6 @@
   display: block;
   width: 100% !important;
   height: 64px !important;
-  
 }
 
 /* Hide the old standalone barcode strip under panel if present */
