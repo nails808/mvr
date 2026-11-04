@@ -21,21 +21,6 @@ interface ViewLicenceScreenProps {
   onPhotoChange?: (uri: string | null) => void;
 }
 
-type LicenceEditKey = keyof Pick<
-  UserData,
-  | 'firstName'
-  | 'lastName'
-  | 'dob'
-  | 'address'
-  | 'licenceNumber'
-  | 'licenceType'
-  | 'proficiency'
-  | 'licenceStatus'
-  | 'issueDate'
-  | 'licenceExpiry'
-  | 'conditions'
-  | 'cardNumber'
->;
 
 type QrPhase = 'hidden' | 'loading' | 'ready' | 'verified' | 'expired' | 'error';
 
@@ -52,16 +37,13 @@ function formatCountdown(ms: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-/** Parse common AU date strings; returns local Date at start of day or null */
 function parseFlexibleDate(raw: string): Date | null {
   const s = (raw || '').trim();
   if (!s) return null;
-  // DD/MM/YYYY
   const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (dmy) {
     return new Date(Number(dmy[3]), Number(dmy[2]) - 1, Number(dmy[1]));
   }
-  // YYYY-MM-DD
   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (iso) {
     return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
@@ -74,17 +56,10 @@ function parseFlexibleDate(raw: string): Date | null {
   return null;
 }
 
-/**
- * Current if expiry is strictly after today (end of expiry day still counts as valid
- * only until start of that day? User said: past or today's date → Expired.
- * So valid only when expiry date > today.
- */
+/** Expired if expiry is today or earlier; Current if after today */
 function isLicenceCurrentByExpiry(expiry: string): boolean {
   const exp = parseFlexibleDate(expiry);
-  if (!exp) {
-    // fall back to status text if we can't parse
-    return true;
-  }
+  if (!exp) return true;
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   return exp.getTime() > today.getTime();
@@ -93,14 +68,16 @@ function isLicenceCurrentByExpiry(expiry: string): boolean {
 function signatureText(firstName: string, lastName: string): string {
   const f = (firstName || '').trim();
   const l = (lastName || '').trim();
-  // Full name in script font — looks like a handwritten signature
   if (f && l) return `${f} ${l}`;
   return f || l || '';
 }
 
 function formatLastRefreshed(d: Date): string {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
   const day = days[d.getDay()];
   const dd = d.getDate();
   const mon = months[d.getMonth()];
@@ -128,8 +105,6 @@ export function ViewLicenceScreen({
 }: ViewLicenceScreenProps) {
   const [tab, setTab] = useState<LicenceTab>('Licence');
   const [lastRefreshed] = useState(() => new Date());
-  const [editing, setEditing] = useState<{ key: LicenceEditKey; label: string } | null>(null);
-  const [draft, setDraft] = useState('');
   const [cardRevealed, setCardRevealed] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -198,17 +173,7 @@ export function ViewLicenceScreen({
     }
   };
 
-  const openEdit = (key: LicenceEditKey, label: string) => {
-    if (!unlocked || !onUserDataChange) return;
-    setDraft(String(userData[key] ?? ''));
-    setEditing({ key, label });
-  };
 
-  const saveEdit = () => {
-    if (!editing || !onUserDataChange) return;
-    onUserDataChange({ ...userData, [editing.key]: draft });
-    setEditing(null);
-  };
 
   const onPhotoFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -221,36 +186,6 @@ export function ViewLicenceScreen({
     e.target.value = '';
   };
 
-  const DetailRow = ({
-    label,
-    value,
-    field,
-  }: {
-    label: string;
-    value: string;
-    field?: LicenceEditKey;
-  }) => {
-    const canEdit = unlocked && field && onUserDataChange;
-    if (canEdit) {
-      return (
-        <button
-          type="button"
-          className="lic-detail-row lic-detail-row--editable"
-          onClick={() => openEdit(field, label)}
-        >
-          <span className="lic-detail-label">{label}</span>
-          <span className="lic-detail-value">{value || '—'}</span>
-          <span className="lic-detail-chevron">›</span>
-        </button>
-      );
-    }
-    return (
-      <div className="lic-detail-row">
-        <span className="lic-detail-label">{label}</span>
-        <span className="lic-detail-value">{value || '—'}</span>
-      </div>
-    );
-  };
 
   const photoEl = (
     <>
@@ -287,9 +222,13 @@ export function ViewLicenceScreen({
 
   return (
     <div className="view-licence dl">
-      {/* View details top bar — picture 1 */}
       <header className="vd-top">
-        <button type="button" className="vd-top__back" onClick={() => onBack?.()} aria-label="Back">
+        <button
+          type="button"
+          className="vd-top__back"
+          onClick={() => onBack?.()}
+          aria-label="Back"
+        >
           ‹
         </button>
         <h1 className="vd-top__title">View details</h1>
@@ -364,7 +303,6 @@ export function ViewLicenceScreen({
         </div>
       </section>
 
-      {/* Segmented tabs — centred, picture 1 style */}
       <div className="dl-seg-wrap">
         <div className="dl-seg" role="tablist">
           {LICENCE_TABS.map((t) => (
@@ -554,40 +492,6 @@ export function ViewLicenceScreen({
           document.body
         )}
 
-      {editing &&
-        createPortal(
-          <div className="modal-backdrop" onClick={() => setEditing(null)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
-              <h3 className="modal-title">{editing.label}</h3>
-              {editing.key === 'address' ? (
-                <textarea
-                  className="modal-input modal-textarea"
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  rows={4}
-                  autoFocus
-                />
-              ) : (
-                <input
-                  className="modal-input"
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  autoFocus
-                />
-              )}
-              <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setEditing(null)}>
-                  Cancel
-                </button>
-                <button type="button" className="btn-primary" onClick={saveEdit}>
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
     </div>
   );
 }
-
