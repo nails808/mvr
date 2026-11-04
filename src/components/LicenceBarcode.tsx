@@ -9,43 +9,64 @@ interface LicenceBarcodeProps {
 }
 
 /**
- * 1D Code 128 barcode for police / scanner use.
- * Dynamically encodes `value` (licence number). No human-readable text.
+ * 1D Code 128 barcode. Fills parent width (no human-readable text).
  */
 export function LicenceBarcode({ value, className }: LicenceBarcodeProps) {
+  const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
+    const wrap = wrapRef.current;
     const el = svgRef.current;
-    if (!el) return;
+    if (!wrap || !el) return;
 
     const text = (value || '').trim();
     if (!text) {
-      // Clear previous drawing
       while (el.firstChild) el.removeChild(el.firstChild);
       return;
     }
 
-    try {
-      JsBarcode(el, text, {
-        format: 'CODE128',
-        displayValue: false, // no human-readable numbers under the bars
-        margin: 0,
-        width: 1.8,
-        height: 56,
-        background: 'transparent',
-        lineColor: '#0D2D6B',
-      });
-    } catch {
-      // Invalid characters for Code128 — fail silently
-      while (el.firstChild) el.removeChild(el.firstChild);
-    }
+    const draw = () => {
+      const available = Math.max(wrap.clientWidth, 120);
+      // CODE128 needs ~11 modules per char + quiet zones; pick bar width to fill
+      const approxModules = text.length * 11 + 40;
+      const barWidth = Math.max(1.2, Math.min(3, available / approxModules));
+
+      try {
+        JsBarcode(el, text, {
+          format: 'CODE128',
+          displayValue: false,
+          margin: 0,
+          width: barWidth,
+          height: 64,
+          background: 'transparent',
+          lineColor: '#000000',
+        });
+        // Stretch SVG to full container width while keeping bar proportions via CSS
+        el.setAttribute('width', String(available));
+        el.style.width = '100%';
+        el.style.height = '64px';
+        el.setAttribute('preserveAspectRatio', 'none');
+      } catch {
+        while (el.firstChild) el.removeChild(el.firstChild);
+      }
+    };
+
+    draw();
+
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(wrap);
+    return () => ro.disconnect();
   }, [value]);
 
   if (!(value || '').trim()) return null;
 
   return (
-    <div className={`licence-barcode ${className ?? ''}`.trim()} aria-label="Licence barcode">
+    <div
+      ref={wrapRef}
+      className={`licence-barcode ${className ?? ''}`.trim()}
+      aria-label="Licence barcode"
+    >
       <svg ref={svgRef} className="licence-barcode__svg" />
     </div>
   );
