@@ -19,7 +19,7 @@ function App() {
   const [stack, setStack] = useState<StackDest>(null);
   const [userData, setUserData] = useState<UserData>(() => userRepository.loadUserData());
   const [photoUri, setPhotoUri] = useState<string | null>(() => userRepository.loadPhotoUri());
-  const [online, setOnline] = useState(
+  const [online, setOnline] = useState(() =>
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
 
@@ -32,18 +32,18 @@ function App() {
   }, [photoUri]);
 
   useEffect(() => {
-    const on = () => setOnline(true);
-    const off = () => setOnline(false);
-    window.addEventListener('online', on);
-    window.addEventListener('offline', off);
+    const goOnline = () => setOnline(true);
+    const goOffline = () => setOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
     return () => {
-      window.removeEventListener('online', on);
-      window.removeEventListener('offline', off);
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
     };
   }, []);
 
   const handleNavigate = useCallback((dest: StackDest) => {
-    setStack(dest);
+    if (dest) setStack(dest);
   }, []);
 
   const handleBack = useCallback(() => {
@@ -63,7 +63,7 @@ function App() {
     setTab(next);
   }, []);
 
-  // View licence: no bottom footer; has its own View details + back header
+  // —— Stack: digital licence (no bottom nav) ——
   if (stack === 'viewlicence') {
     return (
       <div className="app">
@@ -85,9 +85,15 @@ function App() {
     );
   }
 
+  // —— Stack: demerit (back header, no bottom nav) ——
   if (stack === 'demerit') {
     return (
       <div className="app">
+        {!online && (
+          <div className="offline-banner" role="status">
+            You&apos;re offline — licence and vehicle data still available
+          </div>
+        )}
         <div className="stack-screen">
           <header className="stack-header">
             <button type="button" className="stack-back" onClick={handleBack}>
@@ -103,6 +109,7 @@ function App() {
     );
   }
 
+  // —— Tab content (+ myVehicles stack keeps bottom nav) ——
   let content: ReactNode;
 
   if (stack === 'myVehicles') {
@@ -133,9 +140,11 @@ function App() {
           />
         );
         break;
+      default:
+        content = <HomeScreen userData={userData} onNavigate={handleNavigate} />;
+        break;
     }
   }
-
 
   const navActive: NavTab = stack === 'myVehicles' ? 'Vehicles' : tab;
 
