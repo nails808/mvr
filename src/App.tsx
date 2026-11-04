@@ -58,13 +58,33 @@ function App() {
     setPhotoUri(uri);
   }, []);
 
-  /** Selecting a bottom-nav tab always leaves stack screens */
   const handleTabSelect = useCallback((next: NavTab) => {
     setStack(null);
     setTab(next);
   }, []);
 
-  // Demerit keeps a simple back header (not requested to change)
+  // View licence: no bottom footer; has its own View details + back header
+  if (stack === 'viewlicence') {
+    return (
+      <div className="app">
+        {!online && (
+          <div className="offline-banner" role="status">
+            You&apos;re offline — licence and vehicle data still available
+          </div>
+        )}
+        <main className="app-main app-main--full">
+          <ViewLicenceScreen
+            userData={userData}
+            photoUri={photoUri}
+            onBack={handleBack}
+            onUserDataChange={handleUserDataChange}
+            onPhotoChange={handlePhotoChange}
+          />
+        </main>
+      </div>
+    );
+  }
+
   if (stack === 'demerit') {
     return (
       <div className="app">
@@ -85,18 +105,7 @@ function App() {
 
   let content: ReactNode;
 
-  // View licence + My vehicles: no back bar; bottom nav stays visible
-  if (stack === 'viewlicence') {
-    content = (
-      <ViewLicenceScreen
-        userData={userData}
-        photoUri={photoUri}
-        embedded
-        onUserDataChange={handleUserDataChange}
-        onPhotoChange={handlePhotoChange}
-      />
-    );
-  } else if (stack === 'myVehicles') {
+  if (stack === 'myVehicles') {
     content = (
       <MyVehiclesScreen userData={userData} onUserDataChange={handleUserDataChange} />
     );
@@ -127,9 +136,7 @@ function App() {
     }
   }
 
-  // Highlight Licence / Vehicles tab while viewing those stack screens
-  const navActive: NavTab =
-    stack === 'viewlicence' ? 'Licence' : stack === 'myVehicles' ? 'Vehicles' : tab;
+  const navActive: NavTab = stack === 'myVehicles' ? 'Vehicles' : tab;
 
   return (
     <div className="app">
