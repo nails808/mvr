@@ -91,13 +91,26 @@ function isLicenceCurrentByExpiry(expiry: string): boolean {
 }
 
 function signatureText(firstName: string, lastName: string): string {
-  const f = (firstName || '').trim().charAt(0);
-  const l = (lastName || '').trim().charAt(0);
-  // First + last initials in a script font (e.g. "A. S.")
-  if (f && l) return `${f}. ${l}.`;
-  if (f) return `${f}.`;
-  if (l) return `${l}.`;
-  return '';
+  const f = (firstName || '').trim();
+  const l = (lastName || '').trim();
+  // Full name in script font — looks like a handwritten signature
+  if (f && l) return `${f} ${l}`;
+  return f || l || '';
+}
+
+function formatLastRefreshed(d: Date): string {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const day = days[d.getDay()];
+  const dd = d.getDate();
+  const mon = months[d.getMonth()];
+  const yyyy = d.getFullYear();
+  let h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2, '0');
+  const ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${day} ${dd} ${mon} ${yyyy} ${h}:${m}${ampm}`;
 }
 
 function maskCardNumber(value: string): string {
@@ -109,10 +122,12 @@ function maskCardNumber(value: string): string {
 export function ViewLicenceScreen({
   userData,
   photoUri,
+  onBack,
   onUserDataChange,
   onPhotoChange,
 }: ViewLicenceScreenProps) {
   const [tab, setTab] = useState<LicenceTab>('Licence');
+  const [lastRefreshed] = useState(() => new Date());
   const [editing, setEditing] = useState<{ key: LicenceEditKey; label: string } | null>(null);
   const [draft, setDraft] = useState('');
   const [cardRevealed, setCardRevealed] = useState(false);
@@ -271,10 +286,20 @@ export function ViewLicenceScreen({
   );
 
   return (
-    <div className="view-licence view-licence--embedded dl">
+    <div className="view-licence dl">
+      {/* View details top bar — picture 1 */}
+      <header className="vd-top">
+        <button type="button" className="vd-top__back" onClick={() => onBack?.()} aria-label="Back">
+          ‹
+        </button>
+        <h1 className="vd-top__title">View details</h1>
+        <span className="vd-top__spacer" aria-hidden />
+      </header>
+      <p className="vd-refreshed">Last refreshed: {formatLastRefreshed(lastRefreshed)}</p>
+
       <header className="dl-header">
         <div className="dl-header__text">
-          <div className="dl-header__title">Driver licence</div>
+          <div className="dl-header__title">DRIVER LICENCE</div>
           <div className="dl-header__sub">Victoria Australia</div>
         </div>
         <img src={vlogo} alt="VicRoads" className="dl-header__logo" />
@@ -471,27 +496,33 @@ export function ViewLicenceScreen({
         )}
 
         {tab === 'Identity' && (
-          <>
+          <div className="lic-sheet">
             <h2 className="lic-sheet__name">{displayName}</h2>
-            <DetailRow label="First name" value={userData.firstName} field="firstName" />
-            <DetailRow label="Last name" value={userData.lastName} field="lastName" />
-            <DetailRow label="Date of birth" value={userData.dob} field="dob" />
-            <DetailRow label="Address" value={userData.address} field="address" />
-            <DetailRow label="Licence number" value={userData.licenceNumber} field="licenceNumber" />
-          </>
+            <div className="lic-sheet__block">
+              <div className="lic-sheet__label">Address</div>
+              <div className="lic-sheet__value lic-sheet__value--multi">
+                {(userData.address || '—').toUpperCase()}
+              </div>
+            </div>
+            <div className="lic-sheet__block lic-sheet__block--sig">
+              <div className="lic-sheet__label">Signature</div>
+              <div className="lic-signature" aria-label={`Signature of ${displayName}`}>
+                {sig}
+              </div>
+            </div>
+          </div>
         )}
 
         {tab === 'Age' && (
-          <>
-            <div className="age-highlight">
-              <div className="age-highlight__label">Age status</div>
-              <div className="age-highlight__value">{over18 ? 'Over 18' : 'Under 18'}</div>
-              <div className="age-highlight__dob">Date of birth · {userData.dob}</div>
+          <div className="lic-sheet lic-sheet--age">
+            <div className="lic-sheet__label">Age status</div>
+            <div className={`lic-status ${over18 ? 'lic-status--current' : 'lic-status--expired'}`}>
+              <span className="lic-status__icon" aria-hidden>
+                {over18 ? '✓' : '✕'}
+              </span>
+              <span className="lic-status__text">{over18 ? 'Over 18' : 'Under 18'}</span>
             </div>
-            <DetailRow label="First name" value={userData.firstName} field="firstName" />
-            <DetailRow label="Last name" value={userData.lastName} field="lastName" />
-            <DetailRow label="Licence status" value={licenceCurrent ? 'Current' : 'Expired'} />
-          </>
+          </div>
         )}
       </div>
 
