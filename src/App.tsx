@@ -136,6 +136,7 @@ function App() {
     }
   }
 
+
   const navActive: NavTab = stack === 'myVehicles' ? 'Vehicles' : tab;
 
   return (
