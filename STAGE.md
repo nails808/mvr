@@ -161,32 +161,6 @@ Build: `npm run build` (TypeScript 5.8.3 + Vite).
 
 ---
 
-## Stage 6 — Telegram + Cloudflare authentication
-
-### Architecture decision
-- App was **frontend-only** (Vite/React PWA). No Express, no Vue, no existing Node server.
-- **Cannot** put `APP_API_KEY` in the browser.
-- Added:
-  1. **Cloudflare Worker** (`worker/`) — D1 users/sessions/history + Telegram admin bot.
-  2. **Thin Node proxy** (`server/server.js`, native `http`) — holds API key, sets HttpOnly cookie.
-  3. **LoginScreen** matching VicRoads login reference.
-  4. **AuthProvider** gates entire app; Profile **Log out** calls `/api/auth/logout`.
-
-### Worker endpoints
-- `GET /` health
-- `POST /telegram` webhook (secret header)
-- `POST /auth/login|validate|logout` (X-App-Api-Key)
-
-### Telegram commands
-`/add` `/del` `/edit` `/search` `/list` `/count` `/recent` `/kick` `/help`
-
-### Single session
-- `sessions.user_id` **UNIQUE**
-- Login rejects with 409 if active session exists
-- `/kick`, password change, and delete clear sessions
-
-### Deploy guide
-See **AUTH_DEPLOYMENT.md** (dashboard-oriented steps).
 
 
 ### Auth mode update
