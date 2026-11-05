@@ -121,7 +121,7 @@
   padding: 12px 14px;
   border: 1px solid #E0E4E8;
   border-radius: 10px;
-  background: #F5F6F8;
+  background: #E8EEF4;
   font-size: 16px;
   color: #1A2A3A;
   font-family: inherit;
@@ -164,7 +164,7 @@
 }
 
 .btn-secondary {
-  background: #F5F6F8;
+  background: #E8EEF4;
   color: #1A2A3A;
   border: 1px solid #E0E4E8;
 }

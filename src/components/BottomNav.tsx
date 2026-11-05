@@ -1,6 +1,5 @@
 import type { NavTab } from './NavTab';
 import { NAV_TABS } from './NavTab';
-import { VicColors } from '../theme/colors';
 import './BottomNav.css';
 
 interface BottomNavProps {
@@ -16,16 +15,33 @@ const TAB_LABELS: Record<NavTab, string> = {
   Profile: 'Profile',
 };
 
-/** Simple SVG icons matching the spirit of the original Material icons */
 function TabIcon({ tab, active }: { tab: NavTab; active: boolean }) {
-  const color = active ? VicColors.Navy : VicColors.TextMuted;
+  const color = active ? (tab === 'Home' || tab === 'Profile' || tab === 'Payments' ? '#2E7D32' : '#1A2A3A') : '#5A6A7A';
   const size = 24;
 
   switch (tab) {
     case 'Home':
+      // VicRoads-style V mark
       return (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path
+            d="M4 5.5h3.2L12 18l4.8-12.5H20L13.2 20.5h-2.4L4 5.5z"
+            fill={color}
+          />
+          <path
+            d="M14.5 5.5h3.2L20 5.5"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            opacity="0"
+          />
+          <path
+            d="M15 4.5c1.2 0 2.2.4 2.8 1.1"
+            stroke={color}
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            fill="none"
+          />
         </svg>
       );
     case 'Vehicles':
@@ -42,8 +58,15 @@ function TabIcon({ tab, active }: { tab: NavTab; active: boolean }) {
       );
     case 'Payments':
       return (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-          <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2zM11 17h2v-1h1c.55 0 1-.45 1-1v-3c0-.55-.45-1-1-1h-3v-1h4V8h-2V7h-2v1h-1c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1h3v1H9v2h2v1z" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+          <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
+          <path
+            d="M12 7v10M9.5 9.5c.5-.8 1.4-1.3 2.5-1.3 1.5 0 2.5.8 2.5 2s-1 2-2.5 2h-1c-1.5 0-2.5.8-2.5 2s1 2 2.5 2c1.1 0 2-.5 2.5-1.3"
+            stroke={color}
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       );
     case 'Profile':
@@ -64,11 +87,15 @@ export function BottomNav({ active, onSelect }: BottomNavProps) {
           <button
             key={tab}
             type="button"
-            className={`bottom-nav__item ${isActive ? 'bottom-nav__item--active' : ''}`}
+            className={`bottom-nav__item ${isActive ? 'bottom-nav__item--active' : ''} ${
+              tab === 'Home' && isActive ? 'bottom-nav__item--home-active' : tab === 'Profile' && isActive ? 'bottom-nav__item--profile-active' : tab === 'Payments' && isActive ? 'bottom-nav__item--payments-active' : ''
+            }`}
             onClick={() => onSelect(tab)}
             aria-current={isActive ? 'page' : undefined}
           >
-            <TabIcon tab={tab} active={isActive} />
+            <span className="bottom-nav__icon-wrap">
+              <TabIcon tab={tab} active={isActive} />
+            </span>
             <span className="bottom-nav__label">{TAB_LABELS[tab]}</span>
           </button>
         );

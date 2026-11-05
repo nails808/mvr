@@ -1,31 +1,42 @@
-import { MenuCard, type MenuItem } from '../components/MenuCard';
-import '../components/MenuCard.css';
+import './PaymentsScreen.css';
 
-const ITEMS: MenuItem[] = [
+const ITEMS = [
   {
-    id: 'fines',
-    title: 'Pay fines',
-    subtitle: 'Pay your outstanding fines',
+    id: 'methods',
+    title: 'Manage payment methods',
+    subtitle: 'Store your credit card and bank account details to make payments',
   },
   {
-    id: 'arrangements',
-    title: 'Manage your payment arrangements',
-    subtitle: 'Set up payment plan',
+    id: 'direct-debit',
+    title: 'Direct debit payments',
+    subtitle: 'Manage direct debit settings',
   },
   {
     id: 'history',
-    title: 'Payment history',
-    subtitle: 'View past payments',
+    title: 'Transaction history',
+    subtitle: 'View recent transactions made using your myVicRoads account',
   },
-];
+] as const;
 
 export function PaymentsScreen() {
   return (
-    <div className="menu-screen">
-      <h1 className="menu-screen__title">Payments</h1>
-      <div className="menu-screen__section">
-        <MenuCard items={ITEMS} />
-      </div>
+    <div className="payments-screen">
+      <header className="payments-header">
+        <h1>Payments</h1>
+      </header>
+
+      <section className="payments-card" aria-label="Payment options">
+        {ITEMS.map((item, index) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`payments-item ${index === ITEMS.length - 1 ? 'payments-item--last' : ''}`}
+          >
+            <span className="payments-item__title">{item.title}</span>
+            <span className="payments-item__subtitle">{item.subtitle}</span>
+          </button>
+        ))}
+      </section>
     </div>
   );
 }
