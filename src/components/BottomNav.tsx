@@ -16,7 +16,7 @@ const TAB_LABELS: Record<NavTab, string> = {
 };
 
 function TabIcon({ tab, active }: { tab: NavTab; active: boolean }) {
-  const color = active ? (tab === 'Home' || tab === 'Profile' || tab === 'Payments' ? '#2E7D32' : '#1A2A3A') : '#5A6A7A';
+  const color = active ? (tab === 'Home' || tab === 'Profile' || tab === 'Payments' || tab === 'Licence' ? '#2E7D32' : '#1A2A3A') : '#5A6A7A';
   const size = 24;
 
   switch (tab) {
@@ -88,7 +88,7 @@ export function BottomNav({ active, onSelect }: BottomNavProps) {
             key={tab}
             type="button"
             className={`bottom-nav__item ${isActive ? 'bottom-nav__item--active' : ''} ${
-              tab === 'Home' && isActive ? 'bottom-nav__item--home-active' : tab === 'Profile' && isActive ? 'bottom-nav__item--profile-active' : tab === 'Payments' && isActive ? 'bottom-nav__item--payments-active' : ''
+              tab === 'Home' && isActive ? 'bottom-nav__item--home-active' : tab === 'Profile' && isActive ? 'bottom-nav__item--profile-active' : tab === 'Payments' && isActive ? 'bottom-nav__item--payments-active' : tab === 'Licence' && isActive ? 'bottom-nav__item--licence-active' : ''
             }`}
             onClick={() => onSelect(tab)}
             aria-current={isActive ? 'page' : undefined}

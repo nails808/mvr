@@ -83,3 +83,14 @@
   color: #2e7d32;
   font-weight: 600;
 }
+
+.bottom-nav__item--licence-active .bottom-nav__icon-wrap {
+  background: #e8f5e9;
+  width: 48px;
+  border-radius: 16px;
+}
+
+.bottom-nav__item--licence-active .bottom-nav__label {
+  color: #2e7d32;
+  font-weight: 600;
+}
