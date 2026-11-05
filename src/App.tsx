@@ -11,10 +11,14 @@ import { PaymentsScreen } from './screens/PaymentsScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { ViewLicenceScreen } from './screens/ViewLicenceScreen';
 import { DemeritScreen } from './screens/DemeritScreen';
+import { LoginScreen } from './screens/LoginScreen';
+import { useAuth } from './auth/AuthContext';
 import './App.css';
 import './screens/Placeholder.css';
 
 function App() {
+  const { status } = useAuth();
+
   const [tab, setTab] = useState<NavTab>('Home');
   const [stack, setStack] = useState<StackDest>(null);
   const [userData, setUserData] = useState<UserData>(() => userRepository.loadUserData());
@@ -63,7 +67,18 @@ function App() {
     setTab(next);
   }, []);
 
-  // —— Stack: digital licence (no bottom nav) ——
+  if (status === 'loading') {
+    return (
+      <div className="app app--auth-loading">
+        <div className="auth-loading">Loading…</div>
+      </div>
+    );
+  }
+
+  if (status === 'anonymous') {
+    return <LoginScreen />;
+  }
+
   if (stack === 'viewlicence') {
     return (
       <div className="app">
@@ -85,7 +100,6 @@ function App() {
     );
   }
 
-  // —— Stack: demerit (back header, no bottom nav) ——
   if (stack === 'demerit') {
     return (
       <div className="app">
@@ -109,7 +123,6 @@ function App() {
     );
   }
 
-  // —— Tab content (+ myVehicles stack keeps bottom nav) ——
   let content: ReactNode;
 
   if (stack === 'myVehicles') {

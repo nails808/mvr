@@ -1,0 +1,133 @@
+.login-screen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px 48px;
+  box-sizing: border-box;
+  background: #ffffff;
+  font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.login-screen__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 64px;
+}
+
+.login-screen__logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.login-screen__wordmark {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a2a3a;
+  letter-spacing: -0.02em;
+}
+
+.login-screen__panel {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.login-screen__lead {
+  margin: 0 0 28px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 500;
+  color: #1a2a3a;
+}
+
+.login-btn {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 16px 20px;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.login-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.login-btn--primary {
+  background: #1e2d3d;
+  color: #ffffff;
+}
+
+.login-btn--primary:active:not(:disabled) {
+  opacity: 0.92;
+}
+
+.login-btn--secondary {
+  background: #eef0f3;
+  color: #1a2a3a;
+  margin-top: 4px;
+}
+
+.login-screen__hint {
+  margin: 28px 0 12px;
+  text-align: center;
+  font-size: 15px;
+  color: #8a9ab0;
+}
+
+.login-screen__scan {
+  margin-top: 48px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a2a3a;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: center;
+}
+
+.login-screen__form .login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7c8d;
+}
+
+.login-screen__form .login-field input {
+  border: 1px solid #e0e4e8;
+  border-radius: 12px;
+  padding: 14px 14px;
+  font-family: inherit;
+  font-size: 16px;
+  color: #1a2a3a;
+}
+
+.login-screen__form .login-btn--primary {
+  margin-top: 8px;
+}
+
+.login-screen__form .login-btn--secondary {
+  margin-top: 12px;
+}
+
+.login-screen__error {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #d32f2f;
+  text-align: center;
+}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { UserData } from '../data/UserData';
 import { EditDataModal } from '../components/EditDataModal';
+import { useAuth } from '../auth/AuthContext';
 import './ProfileScreen.css';
 
 interface ProfileScreenProps {
@@ -52,7 +53,9 @@ export function ProfileScreen({
   onUserDataChange,
   onPhotoChange,
 }: ProfileScreenProps) {
+  const { logout } = useAuth();
   const [showEditor, setShowEditor] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   return (
     <div className="profile-screen">
@@ -102,9 +105,17 @@ export function ProfileScreen({
 
       {/* Log out */}
       <section className="profile-card profile-card--logout">
-        <button type="button" className="profile-item profile-item--logout profile-item--last">
+        <button
+          type="button"
+          className="profile-item profile-item--logout profile-item--last"
+          disabled={loggingOut}
+          onClick={() => {
+            setLoggingOut(true);
+            void logout().finally(() => setLoggingOut(false));
+          }}
+        >
           <LogoutIcon />
-          <span className="profile-item__label">Log out</span>
+          <span className="profile-item__label">{loggingOut ? 'Logging out…' : 'Log out'}</span>
         </button>
       </section>
 
