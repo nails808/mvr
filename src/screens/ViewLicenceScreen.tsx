@@ -138,11 +138,13 @@ export function ViewLicenceScreen({
     try {
       const session = await createSession(userData, photoUri);
       sessionRef.current = session;
-      // Crisp 2D matrix QR (module grid)
+      // Match APK ViewLicenceScreenKt.generateQrBitmap exactly:
+      // QRCodeWriter.encode(content, QR_CODE, 512, 512, { ERROR_CORRECTION: M, MARGIN: 1 })
+      // pixels: black (0xFF000000) / white (0xFFFFFFFF)
       const dataUrl = await QRCode.toDataURL(session.verifyUrl, {
         width: 512,
-        margin: 2,
-        errorCorrectionLevel: 'H',
+        margin: 1,
+        errorCorrectionLevel: 'M',
         color: { dark: '#000000', light: '#FFFFFF' },
       });
       setQrDataUrl(dataUrl);

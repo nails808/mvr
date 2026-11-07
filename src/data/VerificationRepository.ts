@@ -109,6 +109,33 @@ export async function createSession(
  * Polls whether a scanner has opened the verify page
  * (writes scannedAt on the session).
  */
+
+/**
+ * Matches APK ViewLicenceScreenKt.buildFallbackUrl:
+ * JSON { n, a, l, s, p, e, d, t, ts } → Base64 URL_SAFE|NO_WRAP →
+ * https://mvr-verify.web.app/verify.html?data=<b64>
+ */
+export function buildFallbackVerifyUrl(userData: UserData): string {
+  const payload = {
+    n: `${userData.firstName} ${userData.lastName}`.toUpperCase(),
+    a: userData.address,
+    l: userData.licenceNumber,
+    s: userData.licenceStatus,
+    p: userData.proficiency,
+    e: userData.licenceExpiry,
+    d: userData.dob,
+    t: userData.licenceType,
+    ts: Date.now(),
+  };
+  const json = JSON.stringify(payload);
+  // Android Base64.URL_SAFE (8) | NO_WRAP (2) = 10
+  const b64 = btoa(unescape(encodeURIComponent(json)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+  return `${VerificationConfig.verifyPage}?data=${b64}`;
+}
+
 export async function isScanned(sessionId: string): Promise<boolean> {
   try {
     const url = `${VerificationConfig.dbBaseUrl}/sessions/${sessionId}/scannedAt.json`;
