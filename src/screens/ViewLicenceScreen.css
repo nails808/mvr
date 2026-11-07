@@ -75,7 +75,7 @@
 .lic-sheet__block--sig .lic-signature {
   margin-top: 8px;
   padding: 12px 4px 16px;
-  font-size: 42px;
+  font-size: 48px;
 }
 
 /* Full height main without bottom nav */
@@ -131,7 +131,7 @@
 
 /* —— Mint band: photo + consent / QR —— */
 .dl-band {
-  background: #d8ebe3;
+  background: #a8d9c0;
   padding: 16px;
 }
 
@@ -200,6 +200,7 @@
 
 .dl-consent {
   background: #ffffff;
+  text-align: center;
   border-radius: 10px;
   padding: 14px 12px 12px;
   display: flex;
@@ -215,6 +216,8 @@
   font-weight: 600;
   color: #1a2a3a;
   line-height: 1.35;
+
+  text-align: center;
 }
 
 .dl-consent__ask {
@@ -223,6 +226,8 @@
   font-weight: 600;
   color: #1a2a3a;
   line-height: 1.35;
+
+  text-align: center;
 }
 
 .dl-consent__btn {
@@ -692,13 +697,13 @@
   margin-top: 4px;
   margin-left: 0;
   padding: 4px 0 8px;
-  font-family: 'Dancing Script', 'Segoe Script', 'Bradley Hand', cursive;
-  font-size: 40px;
-  font-weight: 600;
+  font-family: 'Swanky and Moo Moo', 'Segoe Script', 'Bradley Hand', cursive;
+  font-size: 48px;
+  font-weight: 400;
   color: #1a1a1a;
   line-height: 1.15;
-  min-height: 52px;
-  letter-spacing: 0.03em;
+  min-height: 56px;
+  letter-spacing: 0.06em;
   text-align: left;
   display: block;
   width: 100%;
@@ -825,4 +830,317 @@
 .dl-photo-stack .dl-photo {
   width: 100%;
   display: block;
+}
+
+
+/* —— Fullscreen verify (QR + barcode) —— */
+.dl-fs {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.dl-fs__header {
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  padding: 12px 8px 8px;
+  flex-shrink: 0;
+}
+
+.dl-fs__back {
+  border: none;
+  background: none;
+  font-size: 32px;
+  line-height: 1;
+  color: #1a2a3a;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dl-fs__title {
+  margin: 0;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a2a3a;
+}
+
+.dl-fs__spacer {
+  width: 48px;
+}
+
+.dl-fs__body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 28px 40px;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dl-fs__qr {
+  width: min(100%, 320px);
+  height: auto;
+  aspect-ratio: 1;
+  display: block;
+  margin: 12px auto 20px;
+}
+
+.dl-fs__expires {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 500;
+  color: #1a2a3a;
+  text-align: center;
+}
+
+.dl-fs__expires strong {
+  font-weight: 700;
+}
+
+.dl-fs__legal {
+  margin: 0 0 24px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #4a5a6a;
+  text-align: left;
+  width: 100%;
+}
+
+.dl-fs__sharing {
+  width: 100%;
+  text-align: left;
+}
+
+.dl-fs__sharing-title {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a2a3a;
+}
+
+.dl-fs__sharing-list {
+  margin: 0;
+  padding-left: 22px;
+  color: #4a5a6a;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.dl-fs__sharing-list li {
+  margin-bottom: 4px;
+}
+
+.dl-fs__body--barcode {
+  padding-top: 36px;
+}
+
+.dl-fs__barcode-heading {
+  margin: 0 0 28px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a2a3a;
+  text-align: center;
+}
+
+.dl-fs__barcode-wrap {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto 36px;
+  padding: 12px 8px;
+}
+
+.dl-fs__barcode-wrap .licence-barcode,
+.dl-fs__barcode-wrap .licence-barcode__svg {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.dl-fs__barcode-note {
+  margin: 0;
+  max-width: 340px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #6b7c8d;
+  text-align: center;
+}
+
+.dl-fs__link {
+  color: #1a2a3a;
+  text-decoration: underline;
+}
+
+.lic-sheet__barcode--btn {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lic-sheet__barcode--btn:active {
+  opacity: 0.85;
+}
+
+/* Consent panel centered like reference */
+.dl-consent {
+  text-align: center;
+}
+
+.dl-consent__lead,
+.dl-consent__ask {
+  text-align: center;
+}
+
+.dl-consent__btn {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/* ===== FINAL: Verify Age / Verify Barcode fullscreen (overrides) ===== */
+.dl-fs {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 5000 !important;
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0 !important;
+  box-sizing: border-box !important;
+}
+
+.dl-fs__header {
+  display: grid !important;
+  grid-template-columns: 56px 1fr 56px !important;
+  align-items: center !important;
+  justify-content: stretch !important;
+  position: relative !important;
+  padding: 8px 4px 8px !important;
+  flex-shrink: 0 !important;
+  min-height: 52px !important;
+  background: #ffffff !important;
+  z-index: 2 !important;
+}
+
+.dl-fs__back {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 48px !important;
+  height: 48px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  color: #1a2a3a !important;
+  font-size: 34px !important;
+  font-weight: 300 !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  z-index: 3 !important;
+  position: relative !important;
+  -webkit-tap-highlight-color: transparent !important;
+  pointer-events: auto !important;
+}
+
+.dl-fs__title {
+  margin: 0 !important;
+  text-align: center !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  color: #1a2a3a !important;
+  pointer-events: none !important;
+}
+
+.dl-fs__spacer {
+  width: 48px !important;
+  height: 1px !important;
+}
+
+.dl-fs__close {
+  display: none !important;
+}
+
+.dl-fs__body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding: 12px 24px 40px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.dl-fs__body--barcode {
+  padding-top: 40px !important;
+}
+
+.dl-fs__barcode-heading {
+  margin: 0 0 28px !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  color: #1a2a3a !important;
+  text-align: center !important;
+}
+
+.dl-fs__barcode-wrap {
+  width: 100% !important;
+  max-width: 340px !important;
+  margin: 0 auto 32px !important;
+  pointer-events: none !important;
+}
+
+.dl-fs__barcode-note {
+  margin: 0 auto !important;
+  max-width: 320px !important;
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+  color: #6b7c8d !important;
+  text-align: center !important;
+}
+
+.dl-band {
+  background: #a8d9c0 !important;
+}
+
+
+/* 2D matrix QR rendering + clickable panel */
+.dl-qr-matrix {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;
+  background: #ffffff;
+}
+
+.dl-qr-panel--clickable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dl-qr-panel--clickable:active {
+  opacity: 0.92;
+}
+
+.dl-qr-panel--clickable .dl-qr-panel__img {
+  pointer-events: none;
 }

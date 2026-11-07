@@ -67,9 +67,9 @@ function isLicenceCurrentByExpiry(expiry: string): boolean {
 }
 
 function signatureText(firstName: string, lastName: string): string {
-  const f = (firstName || '').trim();
-  const l = (lastName || '').trim();
-  if (f && l) return `${f} ${l}`;
+  const f = (firstName || '').trim().charAt(0).toUpperCase();
+  const l = (lastName || '').trim().charAt(0).toUpperCase();
+  if (f && l) return `${f}${l}`;
   return f || l || '';
 }
 
@@ -111,6 +111,7 @@ export function ViewLicenceScreen({
   const [remainingMs, setRemainingMs] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
   const [fullscreenQr, setFullscreenQr] = useState(false);
+  const [fullscreenBarcode, setFullscreenBarcode] = useState(false);
   const sessionRef = useRef<CreateSessionResult | null>(null);
   const pollRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
@@ -137,10 +138,11 @@ export function ViewLicenceScreen({
     try {
       const session = await createSession(userData, photoUri);
       sessionRef.current = session;
+      // Crisp 2D matrix QR (module grid)
       const dataUrl = await QRCode.toDataURL(session.verifyUrl, {
-        width: 320,
-        margin: 1,
-        errorCorrectionLevel: 'M',
+        width: 512,
+        margin: 2,
+        errorCorrectionLevel: 'H',
         color: { dark: '#000000', light: '#FFFFFF' },
       });
       setQrDataUrl(dataUrl);
@@ -218,7 +220,7 @@ export function ViewLicenceScreen({
             {qrPhase === 'hidden' && (
               <div className="dl-consent">
                 <p className="dl-consent__lead">
-                  Presenting a QR code allows your driver licence information to be accessed and
+                  Presenting a QR code allows your driver licence information to be scanned and
                   shared.
                 </p>
                 <p className="dl-consent__ask">Do you consent to share your information?</p>
@@ -245,7 +247,7 @@ export function ViewLicenceScreen({
               qrDataUrl && (
                 <button
                   type="button"
-                  className="dl-qr-panel"
+                  className="dl-qr-panel dl-qr-panel--clickable"
                   onClick={() => setFullscreenQr(true)}
                   aria-label="Open QR code full screen"
                 >
@@ -256,7 +258,12 @@ export function ViewLicenceScreen({
                       <span className="dl-qr-panel__badge dl-qr-panel__badge--warn">!</span>
                     )}
                   </div>
-                  <img src={qrDataUrl} alt="Verification QR code" className="dl-qr-panel__img" />
+                  <img
+                    src={qrDataUrl}
+                    alt="Verification QR code"
+                    className="dl-qr-panel__img dl-qr-matrix"
+                    draggable={false}
+                  />
                   <div className="dl-qr-panel__expires">
                     {qrPhase === 'expired'
                       ? 'QR expired'
@@ -393,10 +400,15 @@ export function ViewLicenceScreen({
               </button>
             </div>
 
-            <div className="lic-sheet__barcode">
+            <button
+              type="button"
+              className="lic-sheet__barcode lic-sheet__barcode--btn"
+              onClick={() => setFullscreenBarcode(true)}
+              aria-label="Open Victoria Police barcode full screen"
+            >
               <div className="lic-sheet__label">Victoria Police barcode</div>
               <LicenceBarcode value={userData.licenceNumber} />
-            </div>
+            </button>
           </div>
         )}
 
@@ -431,28 +443,94 @@ export function ViewLicenceScreen({
         )}
       </div>
 
-      {fullscreenQr &&
+            {fullscreenQr &&
         qrDataUrl &&
         createPortal(
           <div className="dl-fs" role="dialog" aria-modal>
             <header className="dl-fs__header">
-              <h2 className="dl-fs__title">Verify Licence</h2>
-              <button type="button" className="dl-fs__close" onClick={() => setFullscreenQr(false)}>
-                Close
+              <button
+                type="button"
+                className="dl-fs__back"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setFullscreenQr(false);
+                }}
+                aria-label="Back"
+              >
+                ‹
               </button>
+              <h2 className="dl-fs__title">Verify Age</h2>
+              <span className="dl-fs__spacer" aria-hidden />
             </header>
             <div className="dl-fs__body">
-              <img src={qrDataUrl} alt="Verification QR code" className="dl-fs__qr" />
+              <img src={qrDataUrl} alt="Verification QR code" className="dl-fs__qr dl-qr-matrix" draggable={false} />
               <p className="dl-fs__expires">
-                {qrPhase === 'expired'
-                  ? 'QR expired'
-                  : `QR expires ${formatCountdown(remainingMs)}`}
+                {qrPhase === 'expired' ? (
+                  'QR expired'
+                ) : (
+                  <>
+                    QR expires <strong>{formatCountdown(remainingMs)}</strong>
+                  </>
+                )}
               </p>
               <p className="dl-fs__legal">
                 By presenting this QR code you consent to share some or all of your driver licence
-                information, including with economies, venues and law enforcement agencies. They may
+                information, including with scanners, venues and law enforcement agencies. They may
                 retain your information in accordance with their business practices and legal
                 requirements.
+              </p>
+              <div className="dl-fs__sharing">
+                <p className="dl-fs__sharing-title">You&apos;re sharing:</p>
+                <ul className="dl-fs__sharing-list">
+                  <li>Victorian driver licence photo</li>
+                  <li>Full name, birth date and address</li>
+                  <li>Licence number, type and expiry date</li>
+                  <li>Licence status</li>
+                  <li>Proficiency</li>
+                </ul>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {fullscreenBarcode &&
+        createPortal(
+          <div className="dl-fs dl-fs--barcode" role="dialog" aria-modal>
+            <header className="dl-fs__header">
+              <button
+                type="button"
+                className="dl-fs__back"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setFullscreenBarcode(false);
+                }}
+                aria-label="Back"
+              >
+                ‹
+              </button>
+              <h2 className="dl-fs__title">Verify Barcode</h2>
+              <span className="dl-fs__spacer" aria-hidden />
+            </header>
+            <div className="dl-fs__body dl-fs__body--barcode">
+              <h3 className="dl-fs__barcode-heading">Victoria Police barcode</h3>
+              <div className="dl-fs__barcode-wrap">
+                <LicenceBarcode value={userData.licenceNumber} />
+              </div>
+              <p className="dl-fs__barcode-note">
+                The person who scans this code will only validate your licence number. No other data
+                will be shared. Please see our{' '}
+                <a
+                  className="dl-fs__link"
+                  href="https://www.vicroads.vic.gov.au/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  privacy policy
+                </a>{' '}
+                for more information.
               </p>
             </div>
           </div>,
