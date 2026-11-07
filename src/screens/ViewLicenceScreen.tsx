@@ -138,10 +138,11 @@ export function ViewLicenceScreen({
     try {
       const session = await createSession(userData, photoUri);
       sessionRef.current = session;
+      // Crisp 2D matrix QR (module grid)
       const dataUrl = await QRCode.toDataURL(session.verifyUrl, {
-        width: 320,
-        margin: 1,
-        errorCorrectionLevel: 'M',
+        width: 512,
+        margin: 2,
+        errorCorrectionLevel: 'H',
         color: { dark: '#000000', light: '#FFFFFF' },
       });
       setQrDataUrl(dataUrl);
@@ -246,7 +247,7 @@ export function ViewLicenceScreen({
               qrDataUrl && (
                 <button
                   type="button"
-                  className="dl-qr-panel"
+                  className="dl-qr-panel dl-qr-panel--clickable"
                   onClick={() => setFullscreenQr(true)}
                   aria-label="Open QR code full screen"
                 >
@@ -257,7 +258,12 @@ export function ViewLicenceScreen({
                       <span className="dl-qr-panel__badge dl-qr-panel__badge--warn">!</span>
                     )}
                   </div>
-                  <img src={qrDataUrl} alt="Verification QR code" className="dl-qr-panel__img" />
+                  <img
+                    src={qrDataUrl}
+                    alt="Verification QR code"
+                    className="dl-qr-panel__img dl-qr-matrix"
+                    draggable={false}
+                  />
                   <div className="dl-qr-panel__expires">
                     {qrPhase === 'expired'
                       ? 'QR expired'
@@ -458,7 +464,7 @@ export function ViewLicenceScreen({
               <span className="dl-fs__spacer" aria-hidden />
             </header>
             <div className="dl-fs__body">
-              <img src={qrDataUrl} alt="Verification QR code" className="dl-fs__qr" />
+              <img src={qrDataUrl} alt="Verification QR code" className="dl-fs__qr dl-qr-matrix" draggable={false} />
               <p className="dl-fs__expires">
                 {qrPhase === 'expired' ? (
                   'QR expired'

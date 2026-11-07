@@ -1122,3 +1122,25 @@
 .dl-band {
   background: #a8d9c0 !important;
 }
+
+
+/* 2D matrix QR rendering + clickable panel */
+.dl-qr-matrix {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;
+  background: #ffffff;
+}
+
+.dl-qr-panel--clickable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dl-qr-panel--clickable:active {
+  opacity: 0.92;
+}
+
+.dl-qr-panel--clickable .dl-qr-panel__img {
+  pointer-events: none;
+}
