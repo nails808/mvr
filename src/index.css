@@ -63,3 +63,44 @@ img {
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+
+/* Standalone / installed PWA: full-screen app shell */
+html,
+body,
+#root {
+  height: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  overscroll-behavior: none;
+}
+
+body {
+  /* Safe areas for notch / home indicator when installed */
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
+    env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  background-color: var(--vic-app-bg);
+}
+
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  body {
+    /* Hide browser chrome affordances when running as installed app */
+    user-select: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable] {
+    user-select: text;
+  }
+}
+
+/* iOS standalone */
+@supports (-webkit-touch-callout: none) {
+  html {
+    height: -webkit-fill-available;
+  }
+}

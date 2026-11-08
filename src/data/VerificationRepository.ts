@@ -271,8 +271,7 @@ export async function isScanned(sessionId: string): Promise<boolean> {
 
 /**
  * ISO/IEC 18004 QR Code (2D matrix) — same as APK ZXing BarcodeFormat.QR_CODE.
- * Not Data Matrix / PDF417 / Aztec.
- * Matches APK: 512px, ErrorCorrectionLevel.M, margin 1 module, black/white.
+ * Matches APK: 512px, ErrorCorrectionLevel.M, margin 1, black/white.
  */
 export const QR_ENCODE_OPTIONS = {
   width: 512,
@@ -281,16 +280,13 @@ export const QR_ENCODE_OPTIONS = {
   color: { dark: '#000000', light: '#FFFFFF' },
 };
 
-/**
- * Encode content as an ISO/IEC 18004 QR Code PNG data-URL.
- */
+/** Encode content as an ISO/IEC 18004 QR Code PNG data-URL. */
 export async function encodeIsoQrDataUrl(content: string): Promise<string> {
-  const QRCode = (await import('qrcode')).default;
+  const { default: QRCode } = await import('qrcode');
   return QRCode.toDataURL(content, {
-    width: QR_ENCODE_OPTIONS.width,
-    margin: QR_ENCODE_OPTIONS.margin,
-    errorCorrectionLevel: QR_ENCODE_OPTIONS.errorCorrectionLevel,
-    color: QR_ENCODE_OPTIONS.color,
+    width: 512,
+    margin: 1,
+    errorCorrectionLevel: 'M',
+    color: { dark: '#000000', light: '#FFFFFF' },
   });
 }
-
