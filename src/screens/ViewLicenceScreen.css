@@ -1152,3 +1152,15 @@
 .dl-qr-panel--clickable .dl-qr-panel__img {
   pointer-events: none;
 }
+
+/* ISO QR Code 2D matrix — crisp modules */
+.dl-qr-matrix,
+.dl-fs__qr,
+.dl-qr-panel__img,
+.qr-image {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  background: #ffffff;
+  object-fit: contain;
+}

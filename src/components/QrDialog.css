@@ -156,3 +156,9 @@
   width: 100%;
   padding: 12px;
 }
+
+.qr-image {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: #fff;
+}

@@ -23,16 +23,14 @@ async function readExifOrientation(blob: Blob): Promise<number> {
   try {
     const buf = await blob.arrayBuffer();
     const view = new DataView(buf);
-    if (view.byteLength < 4 || view.getUint16(0, false) !== 0xffd8) return 1; // not JPEG
+    if (view.byteLength < 4 || view.getUint16(0, false) !== 0xffd8) return 1;
     let offset = 2;
     while (offset + 4 < view.byteLength) {
       const marker = view.getUint16(offset, false);
       offset += 2;
       if (marker === 0xffe1) {
-        // APP1
         const len = view.getUint16(offset, false);
         const start = offset + 2;
-        // "Exif\0\0"
         if (
           len >= 8 &&
           view.getUint32(start, false) === 0x45786966 &&
@@ -51,7 +49,6 @@ async function readExifOrientation(blob: Blob): Promise<number> {
             if (entry + 12 > view.byteLength) break;
             const tag = view.getUint16(entry, little);
             if (tag === 0x0112) {
-              // Orientation
               return view.getUint16(entry + 8, little) || 1;
             }
           }
@@ -60,7 +57,6 @@ async function readExifOrientation(blob: Blob): Promise<number> {
       } else if ((marker & 0xff00) !== 0xff00) {
         break;
       } else if (marker === 0xffda) {
-        // SOS
         break;
       } else {
         const len = view.getUint16(offset, false);
@@ -103,7 +99,6 @@ async function photoToBase64(photoUri: string | null): Promise<string | null> {
         el.src = bitmapUrl;
       });
 
-      // Map EXIF orientation → rotation degrees (APK ExifInterface cases 3/6/8)
       let rotateDeg = 0;
       switch (orientation) {
         case 3:
@@ -119,7 +114,6 @@ async function photoToBase64(photoUri: string | null): Promise<string | null> {
           rotateDeg = 0;
       }
 
-      // Draw rotated full image onto temp canvas
       const srcW = img.naturalWidth || img.width;
       const srcH = img.naturalHeight || img.height;
       const swap = rotateDeg === 90 || rotateDeg === 270;
@@ -136,7 +130,6 @@ async function photoToBase64(photoUri: string | null): Promise<string | null> {
       rotCtx.rotate((rotateDeg * Math.PI) / 180);
       rotCtx.drawImage(img, -srcW / 2, -srcH / 2);
 
-      // APK: createScaledBitmap(bmp, 100, 125, true) — exact 100×125 (filter=true)
       const out = document.createElement('canvas');
       out.width = 100;
       out.height = 125;
@@ -188,11 +181,9 @@ export function buildFallbackVerifyUrl(userData: UserData): string {
 }
 
 export type CreateSessionResult = {
-  /** Session id when Firebase succeeded; null for pure fallback */
   sessionId: string | null;
   verifyUrl: string;
   expiresAt: number;
-  /** true when URL is fallback ?data= blob (no live poll) */
   isFallback: boolean;
 };
 
@@ -246,7 +237,6 @@ export async function createSession(
       throw new Error(`Firebase error ${res.status}`);
     }
 
-    // Primary APK URL: ?id= not ?data=
     const verifyUrl = `${VerificationConfig.verifyPage}?id=${sessionId}`;
     return {
       sessionId,
@@ -255,7 +245,6 @@ export async function createSession(
       isFallback: false,
     };
   } catch {
-    // APK onFailure → buildFallbackUrl
     return {
       sessionId: null,
       verifyUrl: buildFallbackVerifyUrl(userData),
@@ -281,22 +270,42 @@ export async function isScanned(sessionId: string): Promise<boolean> {
 }
 
 /**
- * ISO/IEC 18004 QR Code (2D matrix) — same as APK ZXing BarcodeFormat.QR_CODE.
- * Library `qrcode` only encodes standard QR (not Data Matrix / PDF417 / Aztec).
- * Matches APK: 512px, ErrorCorrectionLevel.M, margin 1 module, black/white.
+ * Data Matrix (ISO/IEC 16022) 2D matrix symbol.
+ * Encodes the verify URL as text (not QR Code).
  */
-export const QR_ENCODE_OPTIONS = {
-  /** Standard QR Code version auto-selected for payload length (ISO 18004) */
-  type: 'image/png' as const,
-  width: 512,
-  margin: 1,
-  errorCorrectionLevel: 'M' as const,
-  color: { dark: '#000000', light: '#FFFFFF' },
+export const DATAMATRIX_ENCODE_OPTIONS = {
+  bcid: 'datamatrix' as const,
+  scale: 8,
+  padding: 4,
+  backgroundcolor: 'FFFFFF',
+  barcolor: '000000',
 };
 
-/** Encode a URL/string as an ISO QR Code 2D matrix data-URL (PNG). */
-export async function encodeIsoQrMatrix(content: string): Promise<string> {
-  // Dynamic import keeps tree-shaking simple for callers that already import QRCode
-  const QRCode = (await import('qrcode')).default;
-  return QRCode.toDataURL(content, QR_ENCODE_OPTIONS);
+/**
+ * Encode content as a Data Matrix 2D matrix PNG data-URL via bwip-js.
+ */
+export async function encodeDataMatrixDataUrl(content: string): Promise<string> {
+  const mod = await import('bwip-js');
+  const toCanvas =
+    typeof (mod as { toCanvas?: unknown }).toCanvas === 'function'
+      ? (mod as { toCanvas: (c: HTMLCanvasElement, o: Record<string, unknown>) => void }).toCanvas
+      : (mod as { default: { toCanvas: (c: HTMLCanvasElement, o: Record<string, unknown>) => void } })
+          .default.toCanvas;
+
+  const canvas = document.createElement('canvas');
+  toCanvas(canvas, {
+    bcid: 'datamatrix',
+    text: content,
+    scale: DATAMATRIX_ENCODE_OPTIONS.scale,
+    padding: DATAMATRIX_ENCODE_OPTIONS.padding,
+    backgroundcolor: DATAMATRIX_ENCODE_OPTIONS.backgroundcolor,
+    barcolor: DATAMATRIX_ENCODE_OPTIONS.barcolor,
+    includetext: false,
+  });
+  return canvas.toDataURL('image/png');
+}
+
+/** @deprecated Use encodeDataMatrixDataUrl */
+export async function encodeIsoQrDataUrl(content: string): Promise<string> {
+  return encodeDataMatrixDataUrl(content);
 }

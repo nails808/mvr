@@ -21,4 +21,4 @@ export const VerificationConfig = {
   isConfigured(): boolean {
     return true;
   },
-} as const;
+};

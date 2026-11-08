@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import QRCode from 'qrcode';
 import { VerificationConfig } from '../data/VerificationConfig';
 import type { UserData } from '../data/UserData';
 import {
   createSession,
   isScanned,
-  QR_ENCODE_OPTIONS,
+  encodeDataMatrixDataUrl,
   type CreateSessionResult,
 } from '../data/VerificationRepository';
 import { LicenceBarcode } from '../components/LicenceBarcode';
@@ -115,7 +114,6 @@ export function ViewLicenceScreen({
   const [fullscreenQr, setFullscreenQr] = useState(false);
   const [fullscreenBarcode, setFullscreenBarcode] = useState(false);
   const sessionRef = useRef<CreateSessionResult | null>(null);
-  const pollRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
 
   const displayName = `${userData.firstName} ${userData.lastName}`.trim().toUpperCase();
@@ -124,9 +122,7 @@ export function ViewLicenceScreen({
   const sig = signatureText(userData.firstName, userData.lastName);
 
   const clearTimers = () => {
-    if (pollRef.current) window.clearInterval(pollRef.current);
     if (tickRef.current) window.clearInterval(tickRef.current);
-    pollRef.current = null;
     tickRef.current = null;
   };
 
@@ -142,7 +138,7 @@ export function ViewLicenceScreen({
       const session = await createSession(userData, photoUri);
       sessionRef.current = session;
       // APK generateQrBitmap: QR_CODE 512, EC M, margin 1, black/white
-      const dataUrl = await QRCode.toDataURL(session.verifyUrl, QR_ENCODE_OPTIONS);
+      const dataUrl = await encodeDataMatrixDataUrl(session.verifyUrl);
       setQrDataUrl(dataUrl);
       setRemainingMs(session.expiresAt - Date.now());
       setQrPhase('ready');

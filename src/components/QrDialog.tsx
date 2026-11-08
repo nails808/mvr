@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import QRCode from 'qrcode';
 import {
   createSession,
   isScanned,
-  QR_ENCODE_OPTIONS,
+  encodeDataMatrixDataUrl,
   type CreateSessionResult,
 } from '../data/VerificationRepository';
 import { VerificationConfig } from '../data/VerificationConfig';
@@ -58,7 +57,7 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
         if (cancelled) return;
         sessionRef.current = session;
 
-        const dataUrl = await QRCode.toDataURL(session.verifyUrl, QR_ENCODE_OPTIONS);
+        const dataUrl = await encodeDataMatrixDataUrl(session.verifyUrl);
         if (cancelled) return;
         setQrDataUrl(dataUrl);
         setRemainingMs(session.expiresAt - Date.now());
