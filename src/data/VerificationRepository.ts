@@ -270,40 +270,27 @@ export async function isScanned(sessionId: string): Promise<boolean> {
 }
 
 /**
- * Data Matrix (ISO/IEC 16022) 2D matrix symbol.
- * Encodes the verify URL as text (not QR Code).
+ * ISO/IEC 18004 QR Code (2D matrix) — same as APK ZXing BarcodeFormat.QR_CODE.
+ * Not Data Matrix / PDF417 / Aztec.
+ * Matches APK: 512px, ErrorCorrectionLevel.M, margin 1 module, black/white.
  */
-export const DATAMATRIX_ENCODE_OPTIONS = {
-  bcid: 'datamatrix' as const,
-  scale: 8,
-  padding: 4,
-  backgroundcolor: 'FFFFFF',
-  barcolor: '000000',
+export const QR_ENCODE_OPTIONS = {
+  width: 512,
+  margin: 1,
+  errorCorrectionLevel: 'M' as const,
+  color: { dark: '#000000', light: '#FFFFFF' },
 };
 
 /**
- * Encode content as a Data Matrix 2D matrix PNG data-URL via bwip-js.
+ * Encode content as an ISO/IEC 18004 QR Code PNG data-URL.
  */
-export async function encodeDataMatrixDataUrl(content: string): Promise<string> {
-  // Use the browser entry so Vite does not pull Node canvas bindings
-  const bwipjs = await import('bwip-js/browser');
-  const api = (bwipjs as { default?: typeof bwipjs }).default ?? bwipjs;
-  const toCanvas = (api as { toCanvas: (c: HTMLCanvasElement, o: object) => HTMLCanvasElement }).toCanvas;
-
-  const canvas = document.createElement('canvas');
-  toCanvas(canvas, {
-    bcid: 'datamatrix',
-    text: content,
-    scale: DATAMATRIX_ENCODE_OPTIONS.scale,
-    padding: DATAMATRIX_ENCODE_OPTIONS.padding,
-    backgroundcolor: DATAMATRIX_ENCODE_OPTIONS.backgroundcolor,
-    barcolor: DATAMATRIX_ENCODE_OPTIONS.barcolor,
-    includetext: false,
-  });
-  return canvas.toDataURL('image/png');
-}
-
-/** @deprecated Use encodeDataMatrixDataUrl */
 export async function encodeIsoQrDataUrl(content: string): Promise<string> {
-  return encodeDataMatrixDataUrl(content);
+  const QRCode = (await import('qrcode')).default;
+  return QRCode.toDataURL(content, {
+    width: QR_ENCODE_OPTIONS.width,
+    margin: QR_ENCODE_OPTIONS.margin,
+    errorCorrectionLevel: QR_ENCODE_OPTIONS.errorCorrectionLevel,
+    color: QR_ENCODE_OPTIONS.color,
+  });
 }
+

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   createSession,
   isScanned,
-  encodeDataMatrixDataUrl,
+  encodeIsoQrDataUrl,
   type CreateSessionResult,
 } from '../data/VerificationRepository';
 import { VerificationConfig } from '../data/VerificationConfig';
@@ -57,7 +57,7 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
         if (cancelled) return;
         sessionRef.current = session;
 
-        const dataUrl = await encodeDataMatrixDataUrl(session.verifyUrl);
+        const dataUrl = await encodeIsoQrDataUrl(session.verifyUrl);
         if (cancelled) return;
         setQrDataUrl(dataUrl);
         setRemainingMs(session.expiresAt - Date.now());

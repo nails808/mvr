@@ -5,7 +5,7 @@ import type { UserData } from '../data/UserData';
 import {
   createSession,
   isScanned,
-  encodeDataMatrixDataUrl,
+  encodeIsoQrDataUrl,
   type CreateSessionResult,
 } from '../data/VerificationRepository';
 import { LicenceBarcode } from '../components/LicenceBarcode';
@@ -138,7 +138,7 @@ export function ViewLicenceScreen({
       const session = await createSession(userData, photoUri);
       sessionRef.current = session;
       // APK generateQrBitmap: QR_CODE 512, EC M, margin 1, black/white
-      const dataUrl = await encodeDataMatrixDataUrl(session.verifyUrl);
+      const dataUrl = await encodeIsoQrDataUrl(session.verifyUrl);
       setQrDataUrl(dataUrl);
       setRemainingMs(session.expiresAt - Date.now());
       setQrPhase('ready');
