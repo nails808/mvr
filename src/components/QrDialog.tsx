@@ -27,16 +27,16 @@ function formatCountdown(ms: number): string {
 
 /**
  * Full-screen verification dialog matching APK QrDialog behaviour:
- * - Primary QR: verify.html?id={sessionId}
- * - Fallback QR: verify.html?data={base64url json}
- * - 512px QR_CODE, EC M, margin 1
+ * - Primary: verify.html?id={sessionId}
+ * - Fallback: verify.html?data={base64url json}
+ * - Data Matrix 2D symbol
  * - 120s countdown; isScanned poll when secondsLeft % 3 === 0
  * - Auto-close when expired without scan
  */
 export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
   const [phase, setPhase] = useState<Phase>('loading');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const [remainingMs, setRemainingMs] = useState(VerificationConfig.SESSION_TTL_MS);
+  const [remainingMs, setRemainingMs] = useState<number>(VerificationConfig.SESSION_TTL_MS);
   const [errorMsg, setErrorMsg] = useState('');
   const sessionRef = useRef<CreateSessionResult | null>(null);
   const timerRef = useRef<number | null>(null);
@@ -45,13 +45,13 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
     let cancelled = false;
 
     const clearTimer = () => {
-      if (timerRef.current) {
+      if (timerRef.current !== null) {
         window.clearInterval(timerRef.current);
         timerRef.current = null;
       }
     };
 
-    (async () => {
+    void (async () => {
       try {
         const session = await createSession(userData, photoUri);
         if (cancelled) return;
@@ -69,18 +69,18 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
         timerRef.current = window.setInterval(() => {
           secondsLeft -= 1;
           setRemainingMs(Math.max(0, secondsLeft) * 1000);
+
           if (secondsLeft <= 0) {
             clearTimer();
             setPhase((p) => (p === 'verified' ? p : 'expired'));
-            // APK: if (!isScanned) onDismiss()
             if (sessionRef.current && !sessionRef.current.isFallback) {
-              // expired without verified — close after brief moment
               window.setTimeout(() => {
                 if (!cancelled) onClose();
               }, 500);
             }
             return;
           }
+
           if (canPoll && secondsLeft % 3 === 0 && session.sessionId) {
             void isScanned(session.sessionId).then((scanned) => {
               if (scanned && !cancelled) {
@@ -105,10 +105,15 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
 
   return createPortal(
     <div className="qr-backdrop" onClick={onClose}>
-      <div className="qr-dialog" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal>
+      <div
+        className="qr-dialog"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
         <div className="qr-dialog__header">
           <h2 className="qr-dialog__title">
-            {phase === 'verified' ? 'Licence Verified!' : 'Verification QR Code'}
+            {phase === 'verified' ? 'Licence Verified!' : 'Verification code'}
           </h2>
           <button type="button" className="qr-dialog__close" onClick={onClose} aria-label="Close">
             ✕
@@ -119,7 +124,7 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
           {phase === 'loading' && (
             <div className="qr-status">
               <div className="qr-spinner" />
-              <p>Generating secure QR code…</p>
+              <p>Generating secure code…</p>
             </div>
           )}
 
@@ -134,9 +139,13 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
 
           {(phase === 'ready' || phase === 'expired') && qrDataUrl && (
             <>
-              <img src={qrDataUrl} alt="Verification QR code" className="qr-image dl-qr-matrix" />
+              <img
+                src={qrDataUrl}
+                alt="Verification Data Matrix"
+                className="qr-image dl-qr-matrix"
+              />
               <p className="qr-expires">
-                {phase === 'expired' ? 'QR expired' : `QR expires ${formatCountdown(remainingMs)}`}
+                {phase === 'expired' ? 'Code expired' : `Expires ${formatCountdown(remainingMs)}`}
               </p>
               <div className="qr-sharing">
                 <p className="qr-sharing__title">You&apos;re sharing:</p>

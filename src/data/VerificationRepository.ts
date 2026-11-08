@@ -285,12 +285,10 @@ export const DATAMATRIX_ENCODE_OPTIONS = {
  * Encode content as a Data Matrix 2D matrix PNG data-URL via bwip-js.
  */
 export async function encodeDataMatrixDataUrl(content: string): Promise<string> {
-  const mod = await import('bwip-js');
-  const toCanvas =
-    typeof (mod as { toCanvas?: unknown }).toCanvas === 'function'
-      ? (mod as { toCanvas: (c: HTMLCanvasElement, o: Record<string, unknown>) => void }).toCanvas
-      : (mod as { default: { toCanvas: (c: HTMLCanvasElement, o: Record<string, unknown>) => void } })
-          .default.toCanvas;
+  // Use the browser entry so Vite does not pull Node canvas bindings
+  const bwipjs = await import('bwip-js/browser');
+  const api = (bwipjs as { default?: typeof bwipjs }).default ?? bwipjs;
+  const toCanvas = (api as { toCanvas: (c: HTMLCanvasElement, o: object) => HTMLCanvasElement }).toCanvas;
 
   const canvas = document.createElement('canvas');
   toCanvas(canvas, {
