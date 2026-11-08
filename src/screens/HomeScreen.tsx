@@ -1,5 +1,7 @@
 import type { UserData } from '../data/UserData';
 import type { StackDest } from '../components/NavTab';
+import demeritIcon from '../assets/demerit_point_icon.svg';
+import vehiclesIcon from '../assets/registered_vehicles_icon.svg';
 import './HomeScreen.css';
 
 interface HomeScreenProps {
@@ -9,43 +11,30 @@ interface HomeScreenProps {
 
 function IconDemerit() {
   return (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden>
-      {/* Gauge / speedometer style matching reference */}
-      <path
-        d="M6 22c0-6.627 5.373-12 12-12s12 5.373 12 12"
-        stroke="#1A2A3A"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        fill="none"
-      />
-      <circle cx="18" cy="22" r="3.2" fill="#2E7D32" stroke="#1A2A3A" strokeWidth="1.2" />
-      <line x1="8" y1="22" x2="28" y2="22" stroke="#1A2A3A" strokeWidth="2" strokeLinecap="round" />
-    </svg>
+    <img
+      src={demeritIcon}
+      alt=""
+      width={36}
+      height={36}
+      className="home-shortcut__icon-img"
+      aria-hidden
+    />
   );
 }
 
 function IconVehicles() {
   return (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden>
-      {/* Car + rising bars */}
-      <path
-        d="M7 24h14c.6 0 1.1-.3 1.4-.8l2.2-4.2c.2-.4.2-.9 0-1.3l-1.5-2.8c-.3-.5-.8-.8-1.4-.8H11c-.6 0-1.1.3-1.4.8L8 17.5c-.2.4-.2.9 0 1.3l.4.8H7c-.6 0-1 .4-1 1v2.4c0 .6.4 1 1 1z"
-        fill="#1A2A3A"
-      />
-      <circle cx="11.5" cy="24" r="1.6" fill="#fff" stroke="#1A2A3A" strokeWidth="1" />
-      <circle cx="20.5" cy="24" r="1.6" fill="#fff" stroke="#1A2A3A" strokeWidth="1" />
-      <path
-        d="M24 22v-2.5l3-4 3 3V22"
-        stroke="#2E7D32"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-      <path d="M24 22h6" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" />
-    </svg>
+    <img
+      src={vehiclesIcon}
+      alt=""
+      width={40}
+      height={40}
+      className="home-shortcut__icon-img"
+      aria-hidden
+    />
   );
 }
+
 
 function IconExpand() {
   return (

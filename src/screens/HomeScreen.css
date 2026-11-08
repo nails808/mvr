@@ -135,3 +135,10 @@
     max-width: 456px;
   }
 }
+
+.home-shortcut__icon-img {
+  display: block;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}

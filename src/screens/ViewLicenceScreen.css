@@ -131,7 +131,11 @@
 
 /* —— Mint band: photo + consent / QR —— */
 .dl-band {
-  background: #a8d9c0;
+  background-color: #a8d9c0;
+  background-image: url('/dl-band-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   padding: 16px;
 }
 
@@ -1120,7 +1124,11 @@
 }
 
 .dl-band {
-  background: #a8d9c0 !important;
+  background-color: #a8d9c0 !important;
+  background-image: url('/dl-band-bg.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
 }
 
 
