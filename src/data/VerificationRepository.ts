@@ -2,8 +2,8 @@ import type { UserData } from './UserData';
 import { VerificationConfig } from './VerificationConfig';
 import type { VerificationSession } from './VerificationSession';
 
+/** UUID without dashes, first 20 chars — matches APK createSession */
 function randomSessionId(): string {
-  // UUID without dashes, first 20 chars — same approach as original
   const uuid =
     typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
@@ -16,103 +16,159 @@ function randomSessionId(): string {
 }
 
 /**
- * Resize image data-URL / blob-URL to 100×125 JPEG @ 75% and return Base64
- * (no data: prefix), matching the original Bitmap pipeline.
+ * Read JPEG EXIF Orientation (1..8). Matches Android ExifInterface.TAG_ORIENTATION.
+ * Returns 1 if missing / non-JPEG.
+ */
+async function readExifOrientation(blob: Blob): Promise<number> {
+  try {
+    const buf = await blob.arrayBuffer();
+    const view = new DataView(buf);
+    if (view.byteLength < 4 || view.getUint16(0, false) !== 0xffd8) return 1; // not JPEG
+    let offset = 2;
+    while (offset + 4 < view.byteLength) {
+      const marker = view.getUint16(offset, false);
+      offset += 2;
+      if (marker === 0xffe1) {
+        // APP1
+        const len = view.getUint16(offset, false);
+        const start = offset + 2;
+        // "Exif\0\0"
+        if (
+          len >= 8 &&
+          view.getUint32(start, false) === 0x45786966 &&
+          view.getUint16(start + 4, false) === 0x0000
+        ) {
+          const tiff = start + 6;
+          const little = view.getUint16(tiff, false) === 0x4949;
+          const magic = view.getUint16(tiff, !little);
+          if (magic !== 0x002a) return 1;
+          let ifd0 = tiff + view.getUint32(tiff + 4, little);
+          if (ifd0 + 2 > view.byteLength) return 1;
+          const entries = view.getUint16(ifd0, little);
+          ifd0 += 2;
+          for (let i = 0; i < entries; i++) {
+            const entry = ifd0 + i * 12;
+            if (entry + 12 > view.byteLength) break;
+            const tag = view.getUint16(entry, little);
+            if (tag === 0x0112) {
+              // Orientation
+              return view.getUint16(entry + 8, little) || 1;
+            }
+          }
+        }
+        offset += len;
+      } else if ((marker & 0xff00) !== 0xff00) {
+        break;
+      } else if (marker === 0xffda) {
+        // SOS
+        break;
+      } else {
+        const len = view.getUint16(offset, false);
+        offset += len;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return 1;
+}
+
+/**
+ * APK createSession photo pipeline:
+ *   EXIF-rotate (0/90/180/270) → Bitmap.createScaledBitmap(100, 125, true)
+ *   → JPEG compress → Base64 NO_WRAP (flag 2), no data: prefix
  */
 async function photoToBase64(photoUri: string | null): Promise<string | null> {
   if (!photoUri) return null;
 
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = 100;
-        canvas.height = 125;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(null);
-          return;
-        }
-        // cover-style crop into 100×125
-        const scale = Math.max(100 / img.width, 125 / img.height);
-        const w = img.width * scale;
-        const h = img.height * scale;
-        const x = (100 - w) / 2;
-        const y = (125 - h) / 2;
-        ctx.drawImage(img, x, y, w, h);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
-        const base64 = dataUrl.replace(/^data:image\/jpeg;base64,/, '');
-        resolve(base64);
-      } catch {
-        resolve(null);
+  try {
+    let blob: Blob;
+    if (photoUri.startsWith('data:')) {
+      const res = await fetch(photoUri);
+      blob = await res.blob();
+    } else {
+      const res = await fetch(photoUri);
+      if (!res.ok) return null;
+      blob = await res.blob();
+    }
+
+    const orientation = await readExifOrientation(blob);
+    const bitmapUrl = URL.createObjectURL(blob);
+
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = () => reject(new Error('image load failed'));
+        el.src = bitmapUrl;
+      });
+
+      // Map EXIF orientation → rotation degrees (APK ExifInterface cases 3/6/8)
+      let rotateDeg = 0;
+      switch (orientation) {
+        case 3:
+          rotateDeg = 180;
+          break;
+        case 6:
+          rotateDeg = 90;
+          break;
+        case 8:
+          rotateDeg = 270;
+          break;
+        default:
+          rotateDeg = 0;
       }
-    };
-    img.onerror = () => resolve(null);
-    img.src = photoUri;
-  });
-}
 
-export type CreateSessionResult = {
-  sessionId: string;
-  verifyUrl: string;
-  expiresAt: number;
-};
+      // Draw rotated full image onto temp canvas
+      const srcW = img.naturalWidth || img.width;
+      const srcH = img.naturalHeight || img.height;
+      const swap = rotateDeg === 90 || rotateDeg === 270;
+      const rotW = swap ? srcH : srcW;
+      const rotH = swap ? srcW : srcH;
 
-/**
- * Creates a verification session on Firebase RTDB and returns the public
- * verify URL to encode in the QR code.
- */
-export async function createSession(
-  userData: UserData,
-  photoUri: string | null
-): Promise<CreateSessionResult> {
-  const sessionId = randomSessionId();
-  const now = Date.now();
-  const expiresAt = now + VerificationConfig.SESSION_TTL_MS;
-  const photoBase64 = await photoToBase64(photoUri);
+      const rotCanvas = document.createElement('canvas');
+      rotCanvas.width = rotW;
+      rotCanvas.height = rotH;
+      const rotCtx = rotCanvas.getContext('2d');
+      if (!rotCtx) return null;
 
-  const session: VerificationSession = {
-    name: `${userData.firstName} ${userData.lastName}`.toUpperCase(),
-    address: userData.address,
-    licenceNumber: userData.licenceNumber,
-    licenceStatus: userData.licenceStatus,
-    proficiency: userData.proficiency,
-    licenceExpiry: userData.licenceExpiry,
-    dob: userData.dob,
-    licenceType: userData.licenceType,
-    createdAt: now,
-    expiresAt,
-    photoBase64,
-    scannedAt: null,
-  };
+      rotCtx.translate(rotW / 2, rotH / 2);
+      rotCtx.rotate((rotateDeg * Math.PI) / 180);
+      rotCtx.drawImage(img, -srcW / 2, -srcH / 2);
 
-  const url = `${VerificationConfig.dbBaseUrl}/sessions/${sessionId}.json`;
-  const res = await fetch(url, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(session),
-  });
+      // APK: createScaledBitmap(bmp, 100, 125, true) — exact 100×125 (filter=true)
+      const out = document.createElement('canvas');
+      out.width = 100;
+      out.height = 125;
+      const ctx = out.getContext('2d');
+      if (!ctx) return null;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(rotCanvas, 0, 0, 100, 125);
 
-  if (!res.ok) {
-    throw new Error(`Failed to create session (${res.status})`);
+      const dataUrl = out.toDataURL('image/jpeg', 0.85);
+      return dataUrl.replace(/^data:image\/jpeg;base64,/, '');
+    } finally {
+      URL.revokeObjectURL(bitmapUrl);
+    }
+  } catch {
+    return null;
   }
+}
 
-  // Original decompile referenced ?data= on the verify page
-  const verifyUrl = `${VerificationConfig.verifyPage}?data=${sessionId}`;
-
-  return { sessionId, verifyUrl, expiresAt };
+/** Android Base64.URL_SAFE|NO_WRAP (flags 10) style encoding */
+function base64UrlNoWrap(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let binary = '';
+  bytes.forEach((b) => {
+    binary += String.fromCharCode(b);
+  });
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /**
- * Polls whether a scanner has opened the verify page
- * (writes scannedAt on the session).
- */
-
-/**
- * Matches APK ViewLicenceScreenKt.buildFallbackUrl:
- * JSON { n, a, l, s, p, e, d, t, ts } → Base64 URL_SAFE|NO_WRAP →
+ * APK ViewLicenceScreenKt.buildFallbackUrl:
+ * JSON { n,a,l,s,p,e,d,t,ts } → Base64 URL_SAFE|NO_WRAP →
  * https://mvr-verify.web.app/verify.html?data=<b64>
  */
 export function buildFallbackVerifyUrl(userData: UserData): string {
@@ -127,24 +183,120 @@ export function buildFallbackVerifyUrl(userData: UserData): string {
     t: userData.licenceType,
     ts: Date.now(),
   };
-  const json = JSON.stringify(payload);
-  // Android Base64.URL_SAFE (8) | NO_WRAP (2) = 10
-  const b64 = btoa(unescape(encodeURIComponent(json)))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  const b64 = base64UrlNoWrap(JSON.stringify(payload));
   return `${VerificationConfig.verifyPage}?data=${b64}`;
 }
 
+export type CreateSessionResult = {
+  /** Session id when Firebase succeeded; null for pure fallback */
+  sessionId: string | null;
+  verifyUrl: string;
+  expiresAt: number;
+  /** true when URL is fallback ?data= blob (no live poll) */
+  isFallback: boolean;
+};
+
+/**
+ * APK primary path: PUT session to RTDB, return verify.html?id={sessionId}
+ * On failure: fallback verify.html?data={base64url json} (no sessionId)
+ */
+export async function createSession(
+  userData: UserData,
+  photoUri: string | null
+): Promise<CreateSessionResult> {
+  const expiresAt = Date.now() + VerificationConfig.SESSION_TTL_MS;
+
+  if (!VerificationConfig.isConfigured()) {
+    return {
+      sessionId: null,
+      verifyUrl: buildFallbackVerifyUrl(userData),
+      expiresAt,
+      isFallback: true,
+    };
+  }
+
+  try {
+    const sessionId = randomSessionId();
+    const now = Date.now();
+    const photoBase64 = await photoToBase64(photoUri);
+
+    const session: VerificationSession = {
+      name: `${userData.firstName} ${userData.lastName}`.toUpperCase(),
+      address: userData.address,
+      licenceNumber: userData.licenceNumber,
+      licenceStatus: userData.licenceStatus,
+      proficiency: userData.proficiency,
+      licenceExpiry: userData.licenceExpiry,
+      dob: userData.dob,
+      licenceType: userData.licenceType,
+      createdAt: now,
+      expiresAt: now + VerificationConfig.SESSION_TTL_MS,
+      photoBase64,
+      scannedAt: null,
+    };
+
+    const url = `${VerificationConfig.dbBaseUrl}/sessions/${sessionId}.json`;
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(session),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Firebase error ${res.status}`);
+    }
+
+    // Primary APK URL: ?id= not ?data=
+    const verifyUrl = `${VerificationConfig.verifyPage}?id=${sessionId}`;
+    return {
+      sessionId,
+      verifyUrl,
+      expiresAt: session.expiresAt,
+      isFallback: false,
+    };
+  } catch {
+    // APK onFailure → buildFallbackUrl
+    return {
+      sessionId: null,
+      verifyUrl: buildFallbackVerifyUrl(userData),
+      expiresAt,
+      isFallback: true,
+    };
+  }
+}
+
+/**
+ * APK isScanned: GET .../sessions/{id}/scannedAt.json — true if body ≠ null
+ */
 export async function isScanned(sessionId: string): Promise<boolean> {
   try {
     const url = `${VerificationConfig.dbBaseUrl}/sessions/${sessionId}/scannedAt.json`;
     const res = await fetch(url, { method: 'GET' });
     if (!res.ok) return false;
-    const body = await res.text();
-    const trimmed = body.trim();
-    return trimmed !== 'null' && trimmed !== '' && trimmed !== 'undefined';
+    const body = (await res.text()).trim();
+    return body !== 'null' && body !== '' && body !== 'undefined';
   } catch {
     return false;
   }
+}
+
+/**
+ * ISO/IEC 18004 QR Code (2D matrix) — same as APK ZXing BarcodeFormat.QR_CODE.
+ * Library `qrcode` only encodes standard QR (not Data Matrix / PDF417 / Aztec).
+ * Matches APK: 512px, ErrorCorrectionLevel.M, margin 1 module, black/white.
+ */
+export const QR_ENCODE_OPTIONS = {
+  /** Standard QR Code version auto-selected for payload length (ISO 18004) */
+  type: 'image/png' as const,
+  width: 512,
+  margin: 1,
+  errorCorrectionLevel: 'M' as const,
+  color: { dark: '#000000', light: '#FFFFFF' },
+};
+
+/** Encode a URL/string as an ISO QR Code 2D matrix data-URL (PNG). */
+export async function encodeIsoQrMatrix(content: string): Promise<string> {
+  // Dynamic import keeps tree-shaking simple for callers that already import QRCode
+  const QRCode = (await import('qrcode')).default;
+  return QRCode.toDataURL(content, QR_ENCODE_OPTIONS);
 }

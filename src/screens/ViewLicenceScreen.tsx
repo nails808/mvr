@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
+import { VerificationConfig } from '../data/VerificationConfig';
 import type { UserData } from '../data/UserData';
 import {
   createSession,
   isScanned,
+  QR_ENCODE_OPTIONS,
   type CreateSessionResult,
 } from '../data/VerificationRepository';
 import { LicenceBarcode } from '../components/LicenceBarcode';
@@ -136,38 +138,38 @@ export function ViewLicenceScreen({
     setErrorMsg('');
     setQrDataUrl(null);
     try {
+      // APK: createSession → Pair(sessionId, verify.html?id=…) or fallback ?data=
       const session = await createSession(userData, photoUri);
       sessionRef.current = session;
-      // Match APK ViewLicenceScreenKt.generateQrBitmap exactly:
-      // QRCodeWriter.encode(content, QR_CODE, 512, 512, { ERROR_CORRECTION: M, MARGIN: 1 })
-      // pixels: black (0xFF000000) / white (0xFFFFFFFF)
-      const dataUrl = await QRCode.toDataURL(session.verifyUrl, {
-        width: 512,
-        margin: 1,
-        errorCorrectionLevel: 'M',
-        color: { dark: '#000000', light: '#FFFFFF' },
-      });
+      // APK generateQrBitmap: QR_CODE 512, EC M, margin 1, black/white
+      const dataUrl = await QRCode.toDataURL(session.verifyUrl, QR_ENCODE_OPTIONS);
       setQrDataUrl(dataUrl);
       setRemainingMs(session.expiresAt - Date.now());
       setQrPhase('ready');
 
+      // APK QrDialog loop: delay 1s, decrement secondsLeft; poll isScanned when % 3 === 0
+      let secondsLeft = Math.ceil(VerificationConfig.SESSION_TTL_MS / 1000);
+      const canPoll = !session.isFallback && !!session.sessionId;
       tickRef.current = window.setInterval(() => {
-        const left = (sessionRef.current?.expiresAt ?? 0) - Date.now();
-        setRemainingMs(left);
-        if (left <= 0) {
+        secondsLeft -= 1;
+        setRemainingMs(Math.max(0, secondsLeft) * 1000);
+        if (secondsLeft <= 0) {
           setQrPhase((p) => (p === 'verified' ? p : 'expired'));
           clearTimers();
+          setFullscreenQr(false); // APK auto-dismiss if not scanned
+          return;
         }
-      }, 250);
-
-      pollRef.current = window.setInterval(async () => {
-        const id = sessionRef.current?.sessionId;
-        if (!id) return;
-        if (await isScanned(id)) {
-          setQrPhase('verified');
-          clearTimers();
+        if (canPoll && secondsLeft % 3 === 0) {
+          const id = sessionRef.current?.sessionId;
+          if (!id) return;
+          void isScanned(id).then((scanned) => {
+            if (scanned) {
+              setQrPhase('verified');
+              clearTimers();
+            }
+          });
         }
-      }, 2000);
+      }, 1000);
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : 'Could not create verification session');
       setQrPhase('error');

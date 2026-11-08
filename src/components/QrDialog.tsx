@@ -4,8 +4,10 @@ import QRCode from 'qrcode';
 import {
   createSession,
   isScanned,
+  QR_ENCODE_OPTIONS,
   type CreateSessionResult,
 } from '../data/VerificationRepository';
+import { VerificationConfig } from '../data/VerificationConfig';
 import type { UserData } from '../data/UserData';
 import './QrDialog.css';
 
@@ -24,17 +26,31 @@ function formatCountdown(ms: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+/**
+ * Full-screen verification dialog matching APK QrDialog behaviour:
+ * - Primary QR: verify.html?id={sessionId}
+ * - Fallback QR: verify.html?data={base64url json}
+ * - 512px QR_CODE, EC M, margin 1
+ * - 120s countdown; isScanned poll when secondsLeft % 3 === 0
+ * - Auto-close when expired without scan
+ */
 export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
   const [phase, setPhase] = useState<Phase>('loading');
-  const [errorMsg, setErrorMsg] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const [remainingMs, setRemainingMs] = useState(0);
+  const [remainingMs, setRemainingMs] = useState(VerificationConfig.SESSION_TTL_MS);
+  const [errorMsg, setErrorMsg] = useState('');
   const sessionRef = useRef<CreateSessionResult | null>(null);
-  const pollRef = useRef<number | null>(null);
-  const tickRef = useRef<number | null>(null);
+  const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+
+    const clearTimer = () => {
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
 
     (async () => {
       try {
@@ -42,40 +58,39 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
         if (cancelled) return;
         sessionRef.current = session;
 
-        const dataUrl = await QRCode.toDataURL(session.verifyUrl, {
-          width: 280,
-          margin: 2,
-          errorCorrectionLevel: 'M',
-          color: { dark: '#0D2D6B', light: '#FFFFFF' },
-        });
+        const dataUrl = await QRCode.toDataURL(session.verifyUrl, QR_ENCODE_OPTIONS);
         if (cancelled) return;
-
         setQrDataUrl(dataUrl);
         setRemainingMs(session.expiresAt - Date.now());
         setPhase('ready');
 
-        // Countdown
-        tickRef.current = window.setInterval(() => {
-          const left = (sessionRef.current?.expiresAt ?? 0) - Date.now();
-          setRemainingMs(left);
-          if (left <= 0) {
-            setPhase((p) => (p === 'verified' ? p : 'expired'));
-            if (pollRef.current) window.clearInterval(pollRef.current);
-            if (tickRef.current) window.clearInterval(tickRef.current);
-          }
-        }, 250);
+        let secondsLeft = Math.ceil(VerificationConfig.SESSION_TTL_MS / 1000);
+        const canPoll = !session.isFallback && !!session.sessionId;
 
-        // Poll scannedAt every 2s
-        pollRef.current = window.setInterval(async () => {
-          const id = sessionRef.current?.sessionId;
-          if (!id) return;
-          const scanned = await isScanned(id);
-          if (scanned && !cancelled) {
-            setPhase('verified');
-            if (pollRef.current) window.clearInterval(pollRef.current);
-            if (tickRef.current) window.clearInterval(tickRef.current);
+        timerRef.current = window.setInterval(() => {
+          secondsLeft -= 1;
+          setRemainingMs(Math.max(0, secondsLeft) * 1000);
+          if (secondsLeft <= 0) {
+            clearTimer();
+            setPhase((p) => (p === 'verified' ? p : 'expired'));
+            // APK: if (!isScanned) onDismiss()
+            if (sessionRef.current && !sessionRef.current.isFallback) {
+              // expired without verified — close after brief moment
+              window.setTimeout(() => {
+                if (!cancelled) onClose();
+              }, 500);
+            }
+            return;
           }
-        }, 2000);
+          if (canPoll && secondsLeft % 3 === 0 && session.sessionId) {
+            void isScanned(session.sessionId).then((scanned) => {
+              if (scanned && !cancelled) {
+                setPhase('verified');
+                clearTimer();
+              }
+            });
+          }
+        }, 1000);
       } catch (e) {
         if (cancelled) return;
         setErrorMsg(e instanceof Error ? e.message : 'Could not create verification session');
@@ -85,10 +100,9 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
 
     return () => {
       cancelled = true;
-      if (pollRef.current) window.clearInterval(pollRef.current);
-      if (tickRef.current) window.clearInterval(tickRef.current);
+      clearTimer();
     };
-  }, [userData, photoUri]);
+  }, [userData, photoUri, onClose]);
 
   return createPortal(
     <div className="qr-backdrop" onClick={onClose}>
@@ -119,15 +133,16 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
             </div>
           )}
 
-          {phase === 'ready' && qrDataUrl && (
+          {(phase === 'ready' || phase === 'expired') && qrDataUrl && (
             <>
-              <img src={qrDataUrl} alt="Verification QR code" className="qr-image" />
+              <img src={qrDataUrl} alt="Verification QR code" className="qr-image dl-qr-matrix" />
               <p className="qr-expires">
-                QR expires {formatCountdown(remainingMs)}
+                {phase === 'expired' ? 'QR expired' : `QR expires ${formatCountdown(remainingMs)}`}
               </p>
               <div className="qr-sharing">
                 <p className="qr-sharing__title">You&apos;re sharing:</p>
                 <ul className="qr-sharing__list">
+                  <li>Victorian driver licence photo</li>
                   <li>Full name, birth date and address</li>
                   <li>Licence number, type and expiry date</li>
                   <li>Licence status</li>
@@ -143,13 +158,6 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
               <p>Your licence was successfully verified by the scanner.</p>
             </div>
           )}
-
-          {phase === 'expired' && (
-            <div className="qr-status">
-              <p>This QR code has expired.</p>
-              <p className="qr-status-hint">Close and tap Verify Licence again to generate a new one.</p>
-            </div>
-          )}
         </div>
 
         <div className="qr-dialog__footer">
@@ -158,6 +166,7 @@ export function QrDialog({ userData, photoUri, onClose }: QrDialogProps) {
           </button>
         </div>
       </div>
-    </div>
-  , document.body);
+    </div>,
+    document.body
+  );
 }
