@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { UserData } from '../data/UserData';
 import { EditDataModal } from '../components/EditDataModal';
+import { openVicRoads, VicRoadsPaths } from '../data/vicroadsLinks';
 import { useAuth } from '../auth/AuthContext';
 import './ProfileScreen.css';
 
@@ -66,13 +67,25 @@ export function ProfileScreen({
       {/* Profile and settings */}
       <section className="profile-card">
         <h2 className="profile-card__heading">Profile and settings</h2>
-        <button type="button" className="profile-item">
+        <button
+          type="button"
+          className="profile-item"
+          onClick={() => openVicRoads(VicRoadsPaths.personalInformation)}
+        >
           <span className="profile-item__label">Personal information</span>
         </button>
-        <button type="button" className="profile-item">
+        <button
+          type="button"
+          className="profile-item"
+          onClick={() => openVicRoads(VicRoadsPaths.addresses)}
+        >
           <span className="profile-item__label">Addresses</span>
         </button>
-        <button type="button" className="profile-item">
+        <button
+          type="button"
+          className="profile-item"
+          onClick={() => openVicRoads(VicRoadsPaths.securitySettings)}
+        >
           <span className="profile-item__label">Security settings</span>
         </button>
         <button type="button" className="profile-item profile-item--last">

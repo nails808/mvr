@@ -1,4 +1,5 @@
 import type { StackDest } from '../components/NavTab';
+import { openVicRoads, VicRoadsPaths } from '../data/vicroadsLinks';
 import './LicenceScreen.css';
 
 interface LicenceScreenProps {
@@ -36,17 +37,40 @@ function QrScanIcon() {
   );
 }
 
-const MENU_ROWS: { id: string; title: string; subtitle?: string; action?: StackDest }[] = [
+const MENU_ROWS: {
+  id: string;
+  title: string;
+  subtitle?: string;
+  action?: StackDest;
+  webPath?: string;
+}[] = [
   { id: 'demerit', title: 'View demerit points', action: 'demerit' },
   {
     id: 'renew',
     title: 'Manage licence renewal',
     subtitle: "Renew your licence when it's due",
+    webPath: VicRoadsPaths.licenceRenewal,
   },
-  { id: 'history', title: 'Order driver history report' },
-  { id: 'address', title: 'Update address on licence' },
-  { id: 'learners', title: 'Access myLearners' },
-  { id: 'replace', title: 'Replace licence' },
+  {
+    id: 'history',
+    title: 'Order driver history report',
+    webPath: VicRoadsPaths.driverHistoryReport,
+  },
+  {
+    id: 'address',
+    title: 'Update address on licence',
+    webPath: VicRoadsPaths.updateAddress,
+  },
+  {
+    id: 'learners',
+    title: 'Access myLearners',
+    webPath: VicRoadsPaths.myLearners,
+  },
+  {
+    id: 'replace',
+    title: 'Replace licence',
+    webPath: VicRoadsPaths.replaceLicence,
+  },
 ];
 
 export function LicenceScreen({ onNavigate }: LicenceScreenProps) {
@@ -77,7 +101,11 @@ export function LicenceScreen({ onNavigate }: LicenceScreenProps) {
             type="button"
             className={`licence-tab__row ${i === MENU_ROWS.length - 1 ? 'licence-tab__row--last' : ''}`}
             onClick={() => {
-              if (row.action) onNavigate(row.action);
+              if (row.action) {
+                onNavigate(row.action);
+                return;
+              }
+              if (row.webPath) openVicRoads(row.webPath);
             }}
           >
             <span className="licence-tab__row-title">{row.title}</span>
