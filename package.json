@@ -7,14 +7,23 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "build:vite": "vite build"
+    "build:vite": "vite build",
+    "build:app": "npm run build:vite && npx cap sync android",
+    "cap:sync": "npx cap sync android",
+    "cap:open": "npx cap open android",
+    "android:build": "npm run build:app && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.1",
-    "jsbarcode": "^3.11.6"
+    "jsbarcode": "^3.11.6",
+    "@capacitor/core": "^7.2.0",
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/browser": "^7.0.0",
+    "@capacitor/status-bar": "^7.0.0"
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.5",
@@ -23,6 +32,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "5.8.3",
     "vite": "^6.0.6",
-    "vite-plugin-pwa": "^0.21.1"
+    "vite-plugin-pwa": "^0.21.1",
+    "@capacitor/cli": "^7.2.0"
   }
 }

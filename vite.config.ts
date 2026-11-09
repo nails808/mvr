@@ -16,8 +16,7 @@ export default defineConfig({
       manifest: {
         id: '/',
         name: 'myVicRoads',
-        short_id: '/',
-        name: 'myVicRoads',
+        short_name: 'myVicRoads',
         description: 'Digital Victorian driver licence and vehicle registration',
         theme_color: '#0D2D6B',
         background_color: '#E8ECEE',
@@ -50,7 +49,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg,jpeg}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [

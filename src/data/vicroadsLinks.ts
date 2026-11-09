@@ -1,10 +1,12 @@
 /**
- * Official VicRoads online-services deep links opened from in-app buttons.
+ * Official VicRoads online-services deep links.
  * Base: https://www.vicroads.vic.gov.au
  *
- * Opens the same way as the privacy policy link on View licence:
- * <a href="..." target="_blank" rel="noopener noreferrer">
+ * In Capacitor APK: opens via Capacitor Browser (in-app browser).
+ * In pure PWA: same as privacy policy — target="_blank" anchor.
  */
+import { Capacitor } from '@capacitor/core';
+
 export const VICROADS_ORIGIN = 'https://www.vicroads.vic.gov.au';
 
 export const VicRoadsPaths = {
@@ -32,17 +34,24 @@ export function vicroadsUrl(path: string): string {
   return `${VICROADS_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
-/**
- * Same navigation as the privacy policy <a target="_blank" rel="noopener noreferrer">.
- * Uses a temporary anchor so iOS / installed PWA behaviour matches real links.
- */
-export function openVicRoads(path: string): void {
+export async function openVicRoads(path: string): Promise<void> {
   const url = vicroadsUrl(path);
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url });
+      return;
+    } catch {
+      /* fall through */
+    }
+  }
+
+  // Same as privacy policy <a target="_blank" rel="noopener noreferrer">
   const a = document.createElement('a');
   a.href = url;
   a.target = '_blank';
   a.rel = 'noopener noreferrer';
-  // Required for some WebKit builds to treat as user-activated navigation
   a.style.display = 'none';
   document.body.appendChild(a);
   a.click();
