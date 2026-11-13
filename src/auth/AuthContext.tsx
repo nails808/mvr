@@ -16,11 +16,13 @@ const VALIDATE_WHILE_ACTIVE_MS = 45_000; // re-validate while user is active
 const ACTIVITY_THROTTLE_MS = 5_000; // don't spam activity resets
 
 type LoginResult =
-  | { ok: true; error?: undefined }
+  | { ok: true }
   | { ok: false; error: string };
 
+type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
+
 type AuthState = {
-  status: 'loading' | 'authenticated' | 'anonymous';
+  status: AuthStatus;
   username: string | null;
   login: (username: string, password: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
@@ -40,13 +42,13 @@ const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = [
 ];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [status, setStatus] = useState<AuthState['status']>('loading');
+  const [status, setStatus] = useState<AuthStatus>('loading');
   const [username, setUsername] = useState<string | null>(null);
 
   const idleTimerRef = useRef<number | null>(null);
   const validateTimerRef = useRef<number | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
-  const statusRef = useRef(status);
+  const statusRef = useRef<AuthStatus>(status);
   statusRef.current = status;
 
   const clearTimers = useCallback(() => {
@@ -60,14 +62,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const logout = useCallback(async () => {
+  const logout = useCallback(async (): Promise<void> => {
     clearTimers();
     await logoutRequest();
     setStatus('anonymous');
     setUsername(null);
   }, [clearTimers]);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (): Promise<boolean> => {
     const data = await fetchSession();
     if (data && 'ok' in data && data.ok) {
       setStatus('authenticated');
@@ -161,28 +163,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [status, resetIdleTimer, refresh, clearTimers]);
 
-  const login = useCallback(async (user: string, password: string) => {
-    const { data } = await loginRequest(user, password);
-    if (data?.ok) {
-      setStatus('authenticated');
-      setUsername(data.username ?? user);
-      return { ok: true as const };
-    }
-    return {
-      ok: false as const,
-      error: (data?.error as string) || 'Login failed',
-    };
-  }, []);
+  const login = useCallback(
+    async (user: string, password: string): Promise<LoginResult> => {
+      const { data } = await loginRequest(user, password);
+      if (data?.ok) {
+        setStatus('authenticated');
+        setUsername(typeof data.username === 'string' ? data.username : user);
+        return { ok: true };
+      }
+      return {
+        ok: false,
+        error: (typeof data?.error === 'string' && data.error) || 'Login failed',
+      };
+    },
+    []
+  );
 
-  const value = useMemo(
-    () => ({ status, username, login, logout, refresh }),
+  const value: AuthState = useMemo(
+    () => ({
+      status,
+      username,
+      login,
+      logout,
+      refresh,
+    }),
     [status, username, login, logout, refresh]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
+export function useAuth(): AuthState {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
