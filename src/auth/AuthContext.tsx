@@ -15,12 +15,17 @@ const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 const VALIDATE_WHILE_ACTIVE_MS = 45_000; // re-validate while user is active
 const ACTIVITY_THROTTLE_MS = 5_000; // don't spam activity resets
 
+type LoginResult =
+  | { ok: true; error?: undefined }
+  | { ok: false; error: string };
+
 type AuthState = {
   status: 'loading' | 'authenticated' | 'anonymous';
   username: string | null;
-  login: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  login: (username: string, password: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
-  refresh: () => Promise<void>;
+  /** Re-validates session with the worker. Returns true if still authenticated. */
+  refresh: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
