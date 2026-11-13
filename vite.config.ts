@@ -20,13 +20,17 @@ export default defineConfig({
         description: 'Digital Victorian driver licence and vehicle registration',
         theme_color: '#0D2D6B',
         background_color: '#E8ECEE',
+        // Prefer standalone app chrome (no browser UI). fullscreen first in override
+        // for platforms that support true immersive mode.
         display: 'standalone',
-        display_override: ['fullscreen', 'standalone', 'minimal-ui'],
+        display_override: ['fullscreen', 'standalone', 'minimal-ui', 'browser'],
         orientation: 'portrait',
-        start_url: '/',
+        start_url: '/?source=pwa',
         scope: '/',
         lang: 'en-AU',
+        dir: 'ltr',
         categories: ['utilities', 'lifestyle'],
+        prefer_related_applications: false,
         icons: [
           {
             src: 'icons/icon-192.png',

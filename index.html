@@ -9,11 +9,13 @@
 
     <!-- PWA / Android Chrome -->
     <meta name="theme-color" content="#0D2D6B" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0D2D6B" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0D2D6B" />
     <meta name="color-scheme" content="light" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="application-name" content="myVicRoads" />
 
-    <!-- iOS Home Screen (standalone) -->
+    <!-- iOS Home Screen — standalone / full-screen -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="myVicRoads" />
@@ -23,6 +25,7 @@
     <!-- Windows / Edge -->
     <meta name="msapplication-TileColor" content="#0D2D6B" />
     <meta name="msapplication-tap-highlight" content="no" />
+    <meta name="msapplication-navbutton-color" content="#0D2D6B" />
 
     <link rel="icon" type="image/png" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
@@ -37,6 +40,20 @@
       rel="stylesheet"
     />
     <title>myVicRoads</title>
+    <style>
+      /* Critical shell: avoid white flash / bounce before CSS loads */
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #E8ECEE;
+        overscroll-behavior: none;
+      }
+      #root {
+        min-height: 100%;
+        min-height: 100dvh;
+        min-height: -webkit-fill-available;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

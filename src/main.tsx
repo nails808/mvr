@@ -21,3 +21,19 @@ if (import.meta.env.PROD) {
       /* plugin not present */
     });
 }
+
+/** Capacitor native: edge-to-edge status bar for full-screen shell */
+void (async () => {
+  try {
+    const { Capacitor } = await import('@capacitor/core');
+    if (!Capacitor.isNativePlatform()) return;
+    const { StatusBar, Style } = await import('@capacitor/status-bar');
+    await StatusBar.setOverlaysWebView({ overlay: true });
+    await StatusBar.setStyle({ style: Style.Dark });
+    await StatusBar.setBackgroundColor({ color: '#0D2D6B' }).catch(() => {
+      /* Android only in some versions */
+    });
+  } catch {
+    /* browser / plugin not available */
+  }
+})();

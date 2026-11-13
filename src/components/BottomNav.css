@@ -6,8 +6,11 @@
   display: flex;
   align-items: stretch;
   justify-content: space-around;
-  height: 64px;
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  height: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  box-sizing: border-box;
   background: #ffffff;
   border-top: 1px solid #e8eaed;
   z-index: 100;

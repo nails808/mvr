@@ -18,6 +18,8 @@
   --vic-card-bg: #FFFFFF;
   --vic-input-bg: #F5F6F8;
   --vic-font: Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Fixed bottom nav height (content area); safe-area is added on the nav itself */
+  --bottom-nav-height: 64px;
 }
 
 *,
@@ -29,26 +31,41 @@
 html {
   -webkit-text-size-adjust: 100%;
   height: 100%;
+  height: -webkit-fill-available;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
 }
 
 body {
   margin: 0;
-  min-height: 100%;
   font-family: var(--vic-font);
   font-size: 16px;
   line-height: 1.5;
   color: var(--vic-text-primary);
   background: var(--vic-app-bg);
+  background-color: var(--vic-app-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overscroll-behavior: none;
-  overscroll-behavior-y: none;
   touch-action: manipulation;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  /* Top / sides only — bottom safe area is handled by fixed BottomNav */
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0
+    env(safe-area-inset-left, 0px);
 }
 
 #root {
-  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 
 button {
@@ -64,43 +81,41 @@ img {
   font-variant-numeric: tabular-nums;
 }
 
-
-/* Standalone / installed PWA: full-screen app shell */
-html,
-body,
-#root {
-  height: 100%;
-  min-height: 100%;
-  min-height: 100dvh;
-  min-height: -webkit-fill-available;
-  overscroll-behavior: none;
-}
-
-body {
-  /* Safe areas for notch / home indicator when installed */
-  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
-    env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  background-color: var(--vic-app-bg);
-}
-
-@media (display-mode: standalone), (display-mode: fullscreen) {
+/* Installed PWA / standalone / fullscreen — hide browser chrome affordances */
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
   body {
-    /* Hide browser chrome affordances when running as installed app */
     user-select: none;
   }
 
   input,
   textarea,
-  [contenteditable] {
+  [contenteditable='true'] {
     user-select: text;
   }
 }
 
-/* iOS standalone */
+/* iOS standalone / home-screen web app */
 @supports (-webkit-touch-callout: none) {
   html {
     height: -webkit-fill-available;
+  }
+
+  body,
+  #root {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Prefer full viewport when launched from home screen */
+@media all and (display-mode: standalone), all and (display-mode: fullscreen) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #root {
+    height: 100%;
+    overflow: hidden;
   }
 }

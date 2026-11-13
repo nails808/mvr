@@ -180,10 +180,15 @@ Build: `npm run build` (TypeScript 5.8.3 + Vite).
 ### Telegram commands
 `/add` `/del` `/edit` `/search` `/list` `/count` `/recent` `/kick` `/help`
 
-### Single session
-- `sessions.user_id` **UNIQUE**
-- Login rejects with 409 if active session exists
-- `/kick`, password change, and delete clear sessions
+### Single session + idle timeout
+- `sessions.user_id` **UNIQUE** — only one active session per account.
+- New login **replaces** any existing session (previous device is kicked on next validate).
+- Sliding idle timeout: **15 minutes** (`SESSION_IDLE_MS`). Every successful `/auth/validate` refreshes `last_activity` + `expires_at`.
+- Client (`AuthContext`): activity listeners (mouse/keyboard/touch/scroll) reset a local 15-minute timer; no activity → automatic logout. Tab visibility change forces an immediate re-validate.
+- Periodic server validate while authenticated (~45 s).
+- Clear server messages: “Session ended. Please log in again.” / “Session expired due to inactivity. Please log in again.”
+- `/kick`, password change, and delete clear sessions.
+- Token stored in `sessionStorage` only (cleared when tab closes).
 
 ### Deploy guide
 See **AUTH_DEPLOYMENT.md** (dashboard-oriented steps).
