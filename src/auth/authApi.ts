@@ -10,11 +10,14 @@ const APP_API_KEY = (import.meta.env.VITE_APP_API_KEY as string | undefined) || 
 
 const TOKEN_KEY = 'mvr_session_token';
 const USER_KEY = 'mvr_session_user';
+/** Last force-refresh token applied locally (from Telegram /refresh). */
+const FORCE_REFRESH_KEY = 'mvr_force_refresh_at';
 
 export type SessionInfo = {
   ok: true;
   username: string;
   expiresAt?: string;
+  forceRefreshAt?: string;
 };
 
 function workerHeaders(): HeadersInit {
@@ -62,6 +65,51 @@ export function clearStoredSession() {
   }
 }
 
+/**
+ * If the server force-refresh token is newer than the one stored locally,
+ * persist it, unregister service workers, clear caches, and hard-reload.
+ * Safe against reload loops: token is written before reload.
+ */
+export async function applyRemoteForceRefresh(forceRefreshAt?: string | null): Promise<void> {
+  const remote = (forceRefreshAt || '').trim();
+  if (!remote) return;
+
+  let local = '';
+  try {
+    local = localStorage.getItem(FORCE_REFRESH_KEY) || '';
+  } catch {
+    /* ignore */
+  }
+  if (local === remote) return;
+
+  try {
+    localStorage.setItem(FORCE_REFRESH_KEY, remote);
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister()));
+    }
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    if (typeof caches !== 'undefined') {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // Hard reload so the browser fetches the latest index + assets
+  window.location.reload();
+}
+
 export async function loginRequest(username: string, password: string) {
   if (!WORKER_URL || !APP_API_KEY) {
     return {
@@ -80,6 +128,10 @@ export async function loginRequest(username: string, password: string) {
   const data = await parseJson(res);
   if (data?.ok && data.token) {
     storeSession(String(data.token), String(data.username || username));
+    // Apply force-refresh after login if admin has issued /refresh
+    if (data.forceRefreshAt) {
+      await applyRemoteForceRefresh(String(data.forceRefreshAt));
+    }
   }
   return { status: res.status, data };
 }
@@ -98,10 +150,15 @@ export async function fetchSession(): Promise<SessionInfo | { ok: false; error?:
   const data = await parseJson(res);
   if (data?.ok) {
     if (data.username) sessionStorage.setItem(USER_KEY, String(data.username));
+    const forceRefreshAt =
+      typeof data.forceRefreshAt === 'string' ? data.forceRefreshAt : '';
+    // May reload the page — code after this only runs if no reload is needed
+    await applyRemoteForceRefresh(forceRefreshAt);
     return {
       ok: true,
       username: String(data.username || getStoredUsername() || ''),
       expiresAt: data.expiresAt,
+      forceRefreshAt,
     };
   }
   clearStoredSession();
@@ -123,4 +180,20 @@ export async function logoutRequest() {
   }
   clearStoredSession();
   return { ok: true };
+}
+
+/** Message of the day set via Telegram /motd */
+export async function fetchMotd(): Promise<string> {
+  if (!WORKER_URL || !APP_API_KEY) return '';
+  try {
+    const res = await fetch(`${WORKER_URL}/auth/motd`, {
+      method: 'GET',
+      headers: workerHeaders(),
+    });
+    const data = await parseJson(res);
+    if (data?.ok && typeof data.motd === 'string') return data.motd;
+  } catch {
+    /* ignore */
+  }
+  return '';
 }

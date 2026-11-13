@@ -1,6 +1,7 @@
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
 import type { UserData } from '../data/UserData';
+import { fetchMotd } from '../auth/authApi';
 import './EditDataModal.css';
 
 interface EditDataModalProps {
@@ -51,7 +52,18 @@ const VEHICLE_FIELDS: { key: FieldKey; label: string; multiline?: boolean }[] = 
 export function EditDataModal({ userData, photoUri, onSave, onClose }: EditDataModalProps) {
   const [draft, setDraft] = useState<UserData>({ ...userData });
   const [photo, setPhoto] = useState<string | null>(photoUri);
+  const [motd, setMotd] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchMotd().then((text) => {
+      if (!cancelled && text) setMotd(text);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const setField = (key: FieldKey, value: string) => {
     if (key === 'demeritPoints' || key === 'demeritMax') {
@@ -119,6 +131,12 @@ export function EditDataModal({ userData, photoUri, onSave, onClose }: EditDataM
       </header>
 
       <div className="edm-body">
+        {motd ? (
+          <div className="edm-motd" role="status">
+            {motd}
+          </div>
+        ) : null}
+
         <section className="edm-section">
           <h2 className="edm-section__title">Photo</h2>
           <div className="edm-photo-row">

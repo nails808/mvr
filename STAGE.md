@@ -176,9 +176,20 @@ Build: `npm run build` (TypeScript 5.8.3 + Vite).
 - `GET /` health
 - `POST /telegram` webhook (secret header)
 - `POST /auth/login|validate|logout` (X-App-Api-Key)
+- `GET|POST /auth/motd` (X-App-Api-Key) — message of the day for Edit details screen
 
 ### Telegram commands
-`/add` `/del` `/edit` `/search` `/list` `/count` `/recent` `/kick` `/help`
+`/add` `/trial` `/extend` `/disable` `/enable` `/del` `/edit` `/search` `/list` `/online` `/stats` `/count` `/recent` `/kick` `/purge trials` `/motd` `/refresh` `/help`
+
+- **`/trial`** — random `trial_…@trial.local` + password, account expires in **24h** (`users.expires_at`). Bot returns credentials. Login/validate reject expired trials.
+- **`/extend username hours`** — push `expires_at` forward (from now or current expiry) and set status active.
+- **`/disable` / `/enable`** — soft-lock account (clears sessions on disable). Login requires `status = active`.
+- **`/online`** — users with session `expires_at > now`.
+- **`/stats`** — totals, trials, active sessions, logins 24h/7d.
+- **`/purge trials`** — disable expired trial accounts and clear their sessions (no hard delete).
+- **`/motd [message]`** — set message of the day (`settings` table). Shown at top of **Edit details** (Profile → App version). `/motd` alone shows current; `/motd clear` clears.
+- **`/refresh`** — sets `settings.force_refresh_at`. Login + validate return `forceRefreshAt`; client unregisters SW, clears caches, hard-reloads when token is newer than `localStorage.mvr_force_refresh_at`.
+- API: `GET|POST /auth/motd` (X-App-Api-Key). Frontend: `fetchMotd()` in `EditDataModal`; `applyRemoteForceRefresh()` in `authApi.ts`.
 
 ### Single session + idle timeout
 - `sessions.user_id` **UNIQUE** — only one active session per account.
