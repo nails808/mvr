@@ -17,7 +17,10 @@ export function LoginScreen() {
     setBusy(true);
     try {
       const res = await login(username.trim(), password);
-      if (!res.ok) setError(res.error || 'Login failed');
+      // Narrow discriminated union: error only exists when ok === false
+      if (res.ok === false) {
+        setError(res.error || 'Login failed');
+      }
     } catch {
       setError('Unable to reach authentication service');
     } finally {
