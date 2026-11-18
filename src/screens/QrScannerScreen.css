@@ -1,0 +1,132 @@
+.qr-scan {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  color: #fff;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.qr-scan__header {
+  display: grid;
+  grid-template-columns: 72px 1fr 72px;
+  align-items: center;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 2;
+}
+
+.qr-scan__back {
+  border: none;
+  background: none;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 8px 4px;
+}
+
+.qr-scan__title {
+  margin: 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.qr-scan__spacer {
+  display: block;
+}
+
+.qr-scan__stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #111;
+}
+
+.qr-scan__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.qr-scan__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, transparent 32%, rgba(0, 0, 0, 0.55) 70%);
+  pointer-events: none;
+}
+
+.qr-scan__frame {
+  width: min(72vw, 280px);
+  height: min(72vw, 280px);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.28);
+}
+
+.qr-scan__hint {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 28px;
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
+}
+
+.qr-scan__status {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 14px;
+  background: #1a2a3a;
+}
+
+.qr-scan__status--error {
+  color: #ffc9c9;
+}
+
+.qr-scan__result {
+  padding: 16px;
+  background: #0d2d6b;
+}
+
+.qr-scan__result-label {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+}
+
+.qr-scan__result-value {
+  margin: 0 0 12px;
+  font-size: 14px;
+  word-break: break-all;
+  line-height: 1.35;
+}
+
+.qr-scan__again {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}

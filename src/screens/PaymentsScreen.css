@@ -1,71 +1,80 @@
 .payments-screen {
-  padding: 28px 16px 100px;
+  padding: 20px 16px 88px;
   max-width: 480px;
   margin: 0 auto;
-  min-height: 100%;
   box-sizing: border-box;
-  font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background:
-    radial-gradient(ellipse 100% 60% at 50% -5%, rgba(200, 215, 230, 0.35) 0%, transparent 55%),
-    #eef2f6;
-}
-
-.payments-header {
-  margin-bottom: 20px;
-  padding-top: 4px;
 }
 
 .payments-header h1 {
-  margin: 0;
-  font-size: 34px;
+  margin: 0 0 8px;
+  font-size: 28px;
   font-weight: 700;
   color: #1a2a3a;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.payments-lead {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #5a6a7a;
 }
 
 .payments-card {
-  background: #ffffff;
-  border-radius: 16px;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e0e4e8;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(26, 42, 58, 0.04);
+  box-shadow: 0 2px 12px rgba(13, 45, 107, 0.06);
 }
 
 .payments-item {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  padding: 18px 18px;
+  padding: 16px;
+  background: none;
   border: none;
-  border-bottom: 1px solid #eef0f3;
-  background: #ffffff;
+  border-bottom: 1px solid #e8eaed;
   text-align: left;
-  font-family: inherit;
   cursor: pointer;
+  font-family: inherit;
   -webkit-tap-highlight-color: transparent;
-  box-sizing: border-box;
-}
-
-.payments-item:active {
-  background: #f7f8fa;
+  transition: background 0.15s ease;
 }
 
 .payments-item--last {
   border-bottom: none;
 }
 
+.payments-item:active {
+  background: #f5f6f8;
+}
+
+.payments-item__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .payments-item__title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #1a2a3a;
-  line-height: 1.3;
 }
 
 .payments-item__subtitle {
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 13px;
+  color: #6b7c8d;
+  line-height: 1.35;
+}
+
+.payments-item__chevron {
   color: #8a9ab0;
-  line-height: 1.4;
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
 }

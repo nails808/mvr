@@ -12,6 +12,8 @@ import { ProfileScreen } from './screens/ProfileScreen';
 import { ViewLicenceScreen } from './screens/ViewLicenceScreen';
 import { DemeritScreen } from './screens/DemeritScreen';
 import { LoginScreen } from './screens/LoginScreen';
+import { QrScannerScreen } from './screens/QrScannerScreen';
+import { CameraPermissionScreen } from './screens/CameraPermissionScreen';
 import { useAuth } from './auth/AuthContext';
 import './App.css';
 import './screens/Placeholder.css';
@@ -26,6 +28,7 @@ function App() {
   const [online, setOnline] = useState(() =>
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
+  const [cameraDenied, setCameraDenied] = useState(false);
 
   useEffect(() => {
     userRepository.saveUserData(userData);
@@ -52,6 +55,7 @@ function App() {
 
   const handleBack = useCallback(() => {
     setStack(null);
+    setCameraDenied(false);
   }, []);
 
   const handleUserDataChange = useCallback((data: UserData) => {
@@ -64,7 +68,33 @@ function App() {
 
   const handleTabSelect = useCallback((next: NavTab) => {
     setStack(null);
+    setCameraDenied(false);
     setTab(next);
+  }, []);
+
+  const startQrFlow = useCallback(async () => {
+    // Probe permission state when available
+    try {
+      const nav = navigator as Navigator & {
+        permissions?: { query: (d: { name: string }) => Promise<{ state: string }> };
+      };
+      if (nav.permissions?.query) {
+        const status = await nav.permissions.query({ name: 'camera' });
+        if (status.state === 'denied') {
+          setCameraDenied(true);
+          setStack('cameraPermission');
+          return;
+        }
+        if (status.state === 'granted') {
+          setStack('qrScanner');
+          return;
+        }
+      }
+    } catch {
+      /* fall through to education screen */
+    }
+    setCameraDenied(false);
+    setStack('cameraPermission');
   }, []);
 
   if (status === 'loading') {
@@ -76,12 +106,45 @@ function App() {
   }
 
   if (status === 'anonymous') {
-    return <LoginScreen />;
+    return (
+      <div className="app app--auth">
+        <LoginScreen />
+      </div>
+    );
+  }
+
+  if (stack === 'qrScanner') {
+    return (
+      <QrScannerScreen
+        onBack={handleBack}
+        onNeedPermission={() => {
+          setCameraDenied(true);
+          setStack('cameraPermission');
+        }}
+      />
+    );
+  }
+
+  if (stack === 'cameraPermission') {
+    return (
+      <CameraPermissionScreen
+        denied={cameraDenied}
+        onBack={handleBack}
+        onAllow={() => {
+          setCameraDenied(false);
+          setStack('qrScanner');
+        }}
+        onOpenSettings={() => {
+          // Best-effort: cannot open OS settings from web; show denied guidance
+          setCameraDenied(true);
+        }}
+      />
+    );
   }
 
   if (stack === 'viewlicence') {
     return (
-      <div className="app">
+      <div className="app app--stack-enter">
         {!online && (
           <div className="offline-banner" role="status">
             You&apos;re offline — licence and vehicle data still available
@@ -102,7 +165,7 @@ function App() {
 
   if (stack === 'demerit') {
     return (
-      <div className="app">
+      <div className="app app--stack-enter">
         {!online && (
           <div className="offline-banner" role="status">
             You&apos;re offline — licence and vehicle data still available
@@ -127,7 +190,11 @@ function App() {
 
   if (stack === 'myVehicles') {
     content = (
-      <MyVehiclesScreen userData={userData} onUserDataChange={handleUserDataChange} />
+      <MyVehiclesScreen
+        userData={userData}
+        onUserDataChange={handleUserDataChange}
+        onBack={handleBack}
+      />
     );
   } else {
     switch (tab) {
@@ -150,6 +217,7 @@ function App() {
             photoUri={photoUri}
             onUserDataChange={handleUserDataChange}
             onPhotoChange={handlePhotoChange}
+            onScanQr={() => void startQrFlow()}
           />
         );
         break;
@@ -159,7 +227,8 @@ function App() {
     }
   }
 
-  const navActive: NavTab = stack === 'myVehicles' ? 'Vehicles' : tab;
+  const navActive: NavTab =
+    stack === 'myVehicles' ? 'Vehicles' : tab;
 
   return (
     <div className="app">
@@ -168,7 +237,9 @@ function App() {
           You&apos;re offline — licence and vehicle data still available
         </div>
       )}
-      <main className="app-main">{content}</main>
+      <main className="app-main app-main--fade" key={stack ?? tab}>
+        {content}
+      </main>
       <BottomNav active={navActive} onSelect={handleTabSelect} />
     </div>
   );

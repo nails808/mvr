@@ -10,6 +10,7 @@ interface ProfileScreenProps {
   photoUri: string | null;
   onUserDataChange: (data: UserData) => void;
   onPhotoChange: (uri: string | null) => void;
+  onScanQr?: () => void;
 }
 
 function Chevron() {
@@ -53,6 +54,7 @@ export function ProfileScreen({
   photoUri,
   onUserDataChange,
   onPhotoChange,
+  onScanQr,
 }: ProfileScreenProps) {
   const { logout } = useAuth();
   const [showEditor, setShowEditor] = useState(false);
@@ -97,6 +99,14 @@ export function ProfileScreen({
       {/* App controls */}
       <section className="profile-card">
         <h2 className="profile-card__heading">App controls</h2>
+        <button
+          type="button"
+          className="profile-item"
+          onClick={() => onScanQr?.()}
+        >
+          <span className="profile-item__label">Scan QR code</span>
+          <Chevron />
+        </button>
         <button type="button" className="profile-item profile-item--multi">
           <span className="profile-item__text">
             <span className="profile-item__label">Biometrics and settings</span>

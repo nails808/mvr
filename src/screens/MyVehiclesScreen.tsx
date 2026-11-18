@@ -4,6 +4,7 @@ import './VehiclesScreen.css';
 interface MyVehiclesScreenProps {
   userData: UserData;
   onUserDataChange?: (data: UserData) => void;
+  onBack?: () => void;
 }
 
 type VehicleField =
@@ -69,6 +70,13 @@ export function MyVehiclesScreen({ userData }: MyVehiclesScreenProps) {
 
   return (
     <div className="vehicles-screen vehicles-screen--detail">
+      {onBack && (
+        <header className="vehicles-header vehicles-header--compact">
+          <button type="button" className="stack-back" onClick={{onBack}}>
+            ‹ Back
+          </button>
+        </header>
+      )}
       <section className="vehicle-hero">
         <div className="vehicle-hero__rego">{userData.vehicleRego}</div>
         <div className="vehicle-hero__desc">{userData.vehicleDescription}</div>

@@ -1,0 +1,101 @@
+.cam-perm {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #e8ecee;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.cam-perm__header {
+  display: grid;
+  grid-template-columns: 72px 1fr 72px;
+  align-items: center;
+  padding: 12px 12px 10px;
+  background: #fff;
+  border-bottom: 1px solid #e0e4e8;
+}
+
+.cam-perm__back {
+  border: none;
+  background: none;
+  color: #0d2d6b;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  padding: 8px 4px;
+  font-family: inherit;
+}
+
+.cam-perm__title {
+  margin: 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a2a3a;
+}
+
+.cam-perm__spacer {
+  display: block;
+}
+
+.cam-perm__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 24px 32px;
+  max-width: 420px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cam-perm__icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #e0e4e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 12px rgba(13, 45, 107, 0.08);
+}
+
+.cam-perm__message {
+  margin: 0 0 28px;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #5a6a7a;
+}
+
+.cam-perm__btn {
+  width: 100%;
+  max-width: 320px;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin-bottom: 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cam-perm__btn--primary {
+  background: #0d2d6b;
+  color: #fff;
+}
+
+.cam-perm__btn--primary:active {
+  background: #0a244f;
+}
+
+.cam-perm__btn--ghost {
+  background: transparent;
+  color: #0d2d6b;
+}

@@ -116,7 +116,11 @@ export function LicenceScreen({ onNavigate }: LicenceScreenProps) {
         ))}
       </section>
 
-      <button type="button" className="licence-tab__verify">
+      <button
+        type="button"
+        className="licence-tab__verify"
+        onClick={() => onNavigate('cameraPermission')}
+      >
         <QrScanIcon />
         <span>Verify someone&apos;s licence</span>
       </button>

@@ -2,6 +2,7 @@ import type { UserData } from '../data/UserData';
 import type { StackDest } from '../components/NavTab';
 import demeritIcon from '../assets/demerit_point_icon.svg';
 import vehiclesIcon from '../assets/registered_vehicles_icon.svg';
+import vlogo from '../assets/vlogo_nobg.png';
 import './HomeScreen.css';
 
 interface HomeScreenProps {
@@ -54,6 +55,7 @@ export function HomeScreen({ userData, onNavigate }: HomeScreenProps) {
   return (
     <div className="home-screen">
       <header className="home-header">
+        <img src={vlogo} alt="VicRoads" className="home-header__logo" />
         <h1 className="home-greeting">Hi {userData.firstName}</h1>
       </header>
 

@@ -25,6 +25,7 @@ export const VicRoadsPaths = {
   addresses: '/online-services/personal/my-account/profile-and-settings?a=addresses',
   securitySettings: '/online-services/personal/my-account/profile-and-settings?a=security',
   privacy: '/privacy',
+  registrationRenewal: '/online-services/personal/my-account/registration-renewal',
 } as const;
 
 export type VicRoadsPathKey = keyof typeof VicRoadsPaths;
