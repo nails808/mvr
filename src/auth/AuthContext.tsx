@@ -3,7 +3,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -11,22 +10,19 @@ import {
 import { fetchSession, loginRequest, logoutRequest } from './authApi';
 
 /** Server and client share the same idle policy */
-const IDLE_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
-const VALIDATE_WHILE_ACTIVE_MS = 45_000; // re-validate while user is active
-const ACTIVITY_THROTTLE_MS = 5_000; // don't spam activity resets
+const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+const VALIDATE_WHILE_ACTIVE_MS = 45_000;
+const ACTIVITY_THROTTLE_MS = 5_000;
 
-type LoginResult =
-  | { ok: true }
-  | { ok: false; error: string };
+export type LoginResult = { ok: true } | { ok: false; error: string };
 
-type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
+export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
-type AuthState = {
+export type AuthState = {
   status: AuthStatus;
   username: string | null;
   login: (username: string, password: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
-  /** Re-validates session with the worker. Returns true if still authenticated. */
   refresh: () => Promise<boolean>;
 };
 
@@ -41,13 +37,15 @@ const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = [
   'wheel',
 ];
 
+type TimerId = ReturnType<typeof window.setTimeout>;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [username, setUsername] = useState<string | null>(null);
 
-  const idleTimerRef = useRef<number | null>(null);
-  const validateTimerRef = useRef<number | null>(null);
-  const lastActivityRef = useRef<number>(Date.now());
+  const idleTimerRef = useRef<TimerId | null>(null);
+  const validateTimerRef = useRef<TimerId | null>(null);
+  const lastActivityRef = useRef(Date.now());
   const statusRef = useRef<AuthStatus>(status);
   statusRef.current = status;
 
@@ -71,12 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async (): Promise<boolean> => {
     const data = await fetchSession();
-    if (data && 'ok' in data && data.ok) {
+    if (data.ok === true) {
       setStatus('authenticated');
-      setUsername(data.username);
+      setUsername(typeof data.username === 'string' ? data.username : null);
       return true;
     }
-    // Session invalid / expired / replaced by another device
     clearTimers();
     setStatus('anonymous');
     setUsername(null);
@@ -85,12 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetIdleTimer = useCallback(() => {
     if (statusRef.current !== 'authenticated') return;
-
     if (idleTimerRef.current != null) {
       window.clearTimeout(idleTimerRef.current);
     }
     idleTimerRef.current = window.setTimeout(() => {
-      // No user activity for IDLE_TIMEOUT_MS → force logout
       void logout();
     }, IDLE_TIMEOUT_MS);
   }, [logout]);
@@ -103,7 +98,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     resetIdleTimer();
   }, [resetIdleTimer]);
 
-  // Initial session check + activity listeners + periodic validate while authenticated
   useEffect(() => {
     let cancelled = false;
 
@@ -113,7 +107,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (ok) {
         lastActivityRef.current = Date.now();
         resetIdleTimer();
-        // Periodic server re-validation while the tab is open and authenticated
         validateTimerRef.current = window.setInterval(() => {
           void refresh();
         }, VALIDATE_WHILE_ACTIVE_MS);
@@ -123,7 +116,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const onVisibility = () => {
       if (document.visibilityState === 'visible' && statusRef.current === 'authenticated') {
-        // Tab became visible again — immediately check whether the session is still valid
         void refresh().then((ok) => {
           if (ok) {
             lastActivityRef.current = Date.now();
@@ -148,7 +140,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [refresh, resetIdleTimer, onUserActivity, clearTimers]);
 
-  // When status becomes authenticated (e.g. after login), start the idle + validate timers
   useEffect(() => {
     if (status === 'authenticated') {
       lastActivityRef.current = Date.now();
@@ -163,32 +154,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [status, resetIdleTimer, refresh, clearTimers]);
 
-  const login = useCallback(
-    async (user: string, password: string): Promise<LoginResult> => {
-      const { data } = await loginRequest(user, password);
-      if (data?.ok) {
-        setStatus('authenticated');
-        setUsername(typeof data.username === 'string' ? data.username : user);
-        return { ok: true };
-      }
-      return {
-        ok: false,
-        error: (typeof data?.error === 'string' && data.error) || 'Login failed',
-      };
-    },
-    []
-  );
+  const login = useCallback(async (user: string, password: string): Promise<LoginResult> => {
+    const { data } = await loginRequest(user, password);
+    if (data?.ok) {
+      setStatus('authenticated');
+      setUsername(typeof data.username === 'string' ? data.username : user);
+      const okResult: LoginResult = { ok: true };
+      return okResult;
+    }
+    const failResult: LoginResult = {
+      ok: false,
+      error: typeof data?.error === 'string' && data.error ? data.error : 'Login failed',
+    };
+    return failResult;
+  }, []);
 
-  const value: AuthState = useMemo(
-    () => ({
-      status,
-      username,
-      login,
-      logout,
-      refresh,
-    }),
-    [status, username, login, logout, refresh]
-  );
+  const value: AuthState = {
+    status,
+    username,
+    login,
+    logout,
+    refresh,
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
