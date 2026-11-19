@@ -40,7 +40,8 @@ const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = [
   'wheel',
 ];
 
-type TimerId = ReturnType<typeof window.setTimeout>;
+// Browser window timers return numeric IDs (Node's global timer types differ).
+type TimerId = number;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading');
@@ -71,11 +72,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearTimers]);
 
   const refresh = useCallback(async (): Promise<boolean> => {
-    const data = await fetchSession();
-    if (data.ok === true) {
-      setStatus('authenticated');
-      setUsername(typeof data.username === 'string' ? data.username : null);
-      return true;
+    try {
+      const data = await fetchSession();
+      if (data.ok === true) {
+        setStatus('authenticated');
+        setUsername(typeof data.username === 'string' ? data.username : null);
+        return true;
+      }
+    } catch {
+      // A failed validation must not leave the app stuck in "loading" or
+      // produce unhandled rejections from the interval/visibility handlers.
     }
     clearTimers();
     setStatus('anonymous');
@@ -175,14 +181,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Force AuthState so Provider value always type-checks
-  const value = {
+  const value: AuthState = {
     status,
     username,
     login,
     logout,
     refresh,
-  } as AuthState;
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
