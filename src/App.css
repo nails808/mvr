@@ -256,11 +256,3 @@
   font-weight: 500;
   padding: 8px 12px;
 }
-
-/* Bottom nav safe-area (height token from :root) */
-@supports (padding: max(0px)) {
-  .bottom-nav {
-    padding-bottom: max(0px, env(safe-area-inset-bottom));
-    min-height: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px));
-  }
-}
