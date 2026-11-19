@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import vlogo from '../assets/vlogo_nobg.png';
+import { InstallBanner } from '../components/InstallBanner';
 import './LoginScreen.css';
 
 export function LoginScreen() {
@@ -17,8 +18,7 @@ export function LoginScreen() {
     setBusy(true);
     try {
       const res = await login(username.trim(), password);
-      // Narrow discriminated union: error only exists when ok === false
-      if (res.ok === false) {
+      if (!res.ok) {
         setError(res.error || 'Login failed');
       }
     } catch {
@@ -30,6 +30,7 @@ export function LoginScreen() {
 
   return (
     <div className="login-screen">
+      <InstallBanner />
       <div className="login-screen__brand">
         <img src={vlogo} alt="" className="login-screen__logo" />
         <span className="login-screen__wordmark">myVicRoads</span>

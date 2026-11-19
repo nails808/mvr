@@ -1,0 +1,92 @@
+.install-banner {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px calc(10px + env(safe-area-inset-top, 0px));
+  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  background: linear-gradient(135deg, #0d2d6b 0%, #1a3a6b 100%);
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(13, 45, 107, 0.25);
+}
+
+.install-banner__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.install-banner__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.install-banner__title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.install-banner__sub {
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: 0.9;
+}
+
+.install-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.install-banner__btn {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  background: #fff;
+  color: #0d2d6b;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.install-banner__btn:active {
+  opacity: 0.9;
+}
+
+.install-banner__close {
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.install-banner__steps {
+  max-width: 480px;
+  margin: 10px auto 0;
+  padding: 0 0 0 18px;
+  font-size: 12px;
+  line-height: 1.45;
+  opacity: 0.95;
+}
+
+.install-banner__steps li {
+  margin-bottom: 4px;
+}

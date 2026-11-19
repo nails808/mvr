@@ -63,20 +63,21 @@ const ALL_FIELDS: VehicleField[] = [
   'vehicleTransferInDispute',
 ];
 
-export function MyVehiclesScreen({ userData }: MyVehiclesScreenProps) {
+export function MyVehiclesScreen({ userData, onBack }: MyVehiclesScreenProps) {
   const statusIsCurrent =
     userData.vehicleStatus.toLowerCase() === 'current' ||
     userData.vehicleStatus.toLowerCase() === 'registered';
 
   return (
     <div className="vehicles-screen vehicles-screen--detail">
-      {onBack && (
+      {onBack ? (
         <header className="vehicles-header vehicles-header--compact">
-          <button type="button" className="stack-back" onClick={{onBack}}>
+          <button type="button" className="stack-back" onClick={onBack}>
             ‹ Back
           </button>
         </header>
-      )}
+      ) : null}
+
       <section className="vehicle-hero">
         <div className="vehicle-hero__rego">{userData.vehicleRego}</div>
         <div className="vehicle-hero__desc">{userData.vehicleDescription}</div>

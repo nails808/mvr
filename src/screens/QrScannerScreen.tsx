@@ -6,25 +6,41 @@ interface QrScannerScreenProps {
   onNeedPermission: () => void;
 }
 
+type BarcodeDetectorLike = {
+  detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue?: string }>>;
+};
+
+function getBarcodeDetector(): BarcodeDetectorLike | null {
+  const w = window as unknown as {
+    BarcodeDetector?: new (opts?: { formats: string[] }) => BarcodeDetectorLike;
+  };
+  if (!w.BarcodeDetector) return null;
+  try {
+    return new w.BarcodeDetector({ formats: ['qr_code'] });
+  } catch {
+    return null;
+  }
+}
+
 export function QrScannerScreen({ onBack, onNeedPermission }: QrScannerScreenProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
-  const [scanning, setScanning] = useState(true);
   const [session, setSession] = useState(0);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
-    if (videoRef.current) videoRef.current.srcObject = null;
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
   }, []);
 
   useEffect(() => {
     let cancelled = false;
     let raf = 0;
-    let detector: { detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue?: string }>> } | null =
-      null;
+    let detector: BarcodeDetectorLike | null = null;
 
     const start = async () => {
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -47,18 +63,10 @@ export function QrScannerScreen({ onBack, onNeedPermission }: QrScannerScreenPro
           await video.play().catch(() => undefined);
         }
 
-        // Prefer native BarcodeDetector when available
-        const BD = (window as unknown as { BarcodeDetector?: new (opts?: { formats: string[] }) => typeof detector }).BarcodeDetector;
-        if (BD) {
-          try {
-            detector = new BD({ formats: ['qr_code'] }) as typeof detector;
-          } catch {
-            detector = null;
-          }
-        }
+        detector = getBarcodeDetector();
 
         const tick = async () => {
-          if (cancelled || !scanning) return;
+          if (cancelled) return;
           const v = videoRef.current;
           if (v && detector && v.readyState >= 2) {
             try {
@@ -66,7 +74,6 @@ export function QrScannerScreen({ onBack, onNeedPermission }: QrScannerScreenPro
               const value = codes[0]?.rawValue;
               if (value) {
                 setResult(value);
-                setScanning(false);
                 stopCamera();
                 return;
               }
@@ -98,7 +105,7 @@ export function QrScannerScreen({ onBack, onNeedPermission }: QrScannerScreenPro
       cancelAnimationFrame(raf);
       stopCamera();
     };
-  }, [onNeedPermission, scanning, stopCamera, session]);
+  }, [onNeedPermission, stopCamera, session]);
 
   return (
     <div className="qr-scan">
@@ -140,7 +147,6 @@ export function QrScannerScreen({ onBack, onNeedPermission }: QrScannerScreenPro
             onClick={() => {
               setResult(null);
               setError(null);
-              setScanning(true);
               setSession((s) => s + 1);
             }}
           >

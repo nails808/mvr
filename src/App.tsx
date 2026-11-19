@@ -73,13 +73,11 @@ function App() {
   }, []);
 
   const startQrFlow = useCallback(async () => {
-    // Probe permission state when available
+    // Probe permission state when available (camera is not in all PermissionName unions)
     try {
-      const nav = navigator as Navigator & {
-        permissions?: { query: (d: { name: string }) => Promise<{ state: string }> };
-      };
-      if (nav.permissions?.query) {
-        const status = await nav.permissions.query({ name: 'camera' });
+      const perms = navigator.permissions;
+      if (perms?.query) {
+        const status = await perms.query({ name: 'camera' as PermissionName });
         if (status.state === 'denied') {
           setCameraDenied(true);
           setStack('cameraPermission');
