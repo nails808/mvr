@@ -1,35 +1,89 @@
 .app {
-  flex: 1;
-  min-height: 100%;
-  min-height: 100dvh;
-  min-height: -webkit-fill-available;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
   height: 100%;
-  background: var(--vic-app-bg, #E8ECEE);
+  background: var(--vic-app-bg, #e8ecee);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+}
+
+.app--auth,
+.app--auth-loading {
+  height: 100%;
+  min-height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #fff;
+}
+
+.app--auth-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-loading {
+  font-family: Roboto, sans-serif;
+  color: #6b7c8d;
+  font-size: 15px;
 }
 
 .app-main {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   /* Space for fixed bottom nav + home indicator */
-  padding-bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px));
 }
 
 .app-main--full {
   /* Full-screen stack routes (no bottom nav) */
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.app-main--fade {
+  animation: app-fade-in 0.2s ease;
+}
+
+.app--stack-enter {
+  animation: app-slide-up 0.22s ease;
+}
+
+@keyframes app-fade-in {
+  from {
+    opacity: 0.55;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes app-slide-up {
+  from {
+    opacity: 0.7;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Stack (overlay) screens */
 .stack-screen {
   min-height: 100%;
-  min-height: 100dvh;
-  min-height: -webkit-fill-available;
-  background: var(--vic-app-bg, #E8ECEE);
+  height: 100%;
+  background: var(--vic-app-bg, #e8ecee);
   display: flex;
   flex-direction: column;
 }
@@ -39,15 +93,15 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  padding-top: max(12px, env(safe-area-inset-top));
   background: #ffffff;
-  border-bottom: 1px solid #E8EAED;
+  border-bottom: 1px solid #e8eaed;
+  flex-shrink: 0;
 }
 
 .stack-header h1 {
   font-size: 18px;
   font-weight: 600;
-  color: #1A2A3A;
+  color: #1a2a3a;
   margin: 0;
   flex: 1;
 }
@@ -56,7 +110,7 @@
   background: none;
   border: none;
   font-size: 17px;
-  color: #0D2D6B;
+  color: #0d2d6b;
   font-weight: 500;
   padding: 4px 0;
   cursor: pointer;
@@ -71,23 +125,30 @@
   box-sizing: border-box;
 }
 
+.stack-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .vehicle-card-preview {
   background: #ffffff;
   border-radius: 12px;
   padding: 18px;
-  border: 1px solid #E8EAED;
+  border: 1px solid #e8eaed;
 }
 
 .vehicle-rego {
   font-size: 22px;
   font-weight: 700;
-  color: #0D2D6B;
+  color: #0d2d6b;
   letter-spacing: 0.04em;
 }
 
 .vehicle-desc {
   font-size: 14px;
-  color: #1A2A3A;
+  color: #1a2a3a;
   margin-top: 6px;
 }
 
@@ -96,13 +157,13 @@
   margin-top: 10px;
   font-size: 12px;
   font-weight: 600;
-  color: #2E7D32;
-  background: #E8F5E9;
+  color: #2e7d32;
+  background: #e8f5e9;
   padding: 4px 10px;
   border-radius: 20px;
 }
 
-/* ── Shared modal (Profile + Vehicles edit dialogs) ── */
+/* Shared modal */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -128,24 +189,24 @@
   margin: 0 0 14px;
   font-size: 17px;
   font-weight: 600;
-  color: #1A2A3A;
+  color: #1a2a3a;
 }
 
 .modal-input {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid #E0E4E8;
+  border: 1px solid #e0e4e8;
   border-radius: 10px;
-  background: #E8EEF4;
+  background: #e8eef4;
   font-size: 16px;
-  color: #1A2A3A;
+  color: #1a2a3a;
   font-family: inherit;
   outline: none;
   box-sizing: border-box;
 }
 
 .modal-input:focus {
-  border-color: #0D2D6B;
+  border-color: #0d2d6b;
   background: #fff;
 }
 
@@ -174,78 +235,32 @@
 }
 
 .btn-primary {
-  background: #0D2D6B;
+  background: #0d2d6b;
   color: #fff;
 }
 
 .btn-secondary {
-  background: #E8EEF4;
-  color: #1A2A3A;
-  border: 1px solid #E0E4E8;
-}
-
-.stack-scroll {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  background: #e8eef4;
+  color: #1a2a3a;
+  border: 1px solid #e0e4e8;
 }
 
 .offline-banner {
   position: sticky;
   top: 0;
   z-index: 150;
-  background: #1E2D3D;
+  background: #1e2d3d;
   color: #fff;
   text-align: center;
   font-size: 13px;
   font-weight: 500;
   padding: 8px 12px;
-  padding-top: max(8px, env(safe-area-inset-top));
 }
 
-/* iOS standalone: avoid content under home indicator on bottom nav */
+/* Bottom nav safe-area (height token from :root) */
 @supports (padding: max(0px)) {
   .bottom-nav {
     padding-bottom: max(0px, env(safe-area-inset-bottom));
-    min-height: calc(64px + env(safe-area-inset-bottom));
+    min-height: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px));
   }
-}
-
-.app-main--full {
-  padding-bottom: 0;
-  max-width: 480px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.app--auth-loading {
-  min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-}
-.auth-loading {
-  font-family: Roboto, sans-serif;
-  color: #6b7c8d;
-  font-size: 15px;
-}
-
-/* Tab / stack transitions (E.20) */
-.app-main--fade {
-  animation: app-fade-in 0.2s ease;
-}
-
-.app--stack-enter {
-  animation: app-slide-up 0.22s ease;
-}
-
-@keyframes app-fade-in {
-  from { opacity: 0.55; transform: translateY(4px); }
-  to { opacity: 1; transform: none; }
-}
-
-@keyframes app-slide-up {
-  from { opacity: 0.7; transform: translateY(10px); }
-  to { opacity: 1; transform: none; }
 }

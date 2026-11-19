@@ -42,16 +42,18 @@
     <title>myVicRoads</title>
     <style>
       /* Critical shell: avoid white flash / bounce before CSS loads */
-      html, body {
+      html, body, #root {
         margin: 0;
         height: 100%;
+        min-height: 100%;
+        min-height: 100dvh;
+        min-height: -webkit-fill-available;
         background: #E8ECEE;
         overscroll-behavior: none;
       }
       #root {
-        min-height: 100%;
-        min-height: 100dvh;
-        min-height: -webkit-fill-available;
+        display: flex;
+        flex-direction: column;
       }
     </style>
   </head>

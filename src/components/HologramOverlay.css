@@ -10,21 +10,22 @@
 .holo-overlay__img {
   position: absolute;
   left: 50%;
-  top: 42%;
-  width: 58%;
-  height: 58%;
-  transform: translate(-50%, -50%) scale(1.02) rotate(var(--holo-angle, 0deg));
+  top: 44%;
+  /* Larger coat-of-arms mark — closer to physical DL hologram scale */
+  width: 82%;
+  height: 82%;
+  transform: translate(-50%, -50%) scale(1.05) rotate(var(--holo-angle, 0deg));
   transform-origin: center;
   object-fit: contain;
   object-position: center;
-  opacity: 0.28;
+  opacity: 0.34;
   mix-blend-mode: soft-light;
   transition: opacity 0.35s ease;
-  filter: saturate(1.2) contrast(1.1) brightness(1.08);
+  filter: saturate(1.25) contrast(1.12) brightness(1.1);
 }
 
 .holo-overlay--ready .holo-overlay__img {
-  opacity: 0.38;
+  opacity: 0.46;
 }
 
 .holo-overlay__shine {

@@ -3,9 +3,9 @@
   top: 0;
   z-index: 200;
   width: 100%;
+  flex-shrink: 0;
   box-sizing: border-box;
-  padding: 10px 12px calc(10px + env(safe-area-inset-top, 0px));
-  padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  padding: 10px 12px;
   background: linear-gradient(135deg, #0d2d6b 0%, #1a3a6b 100%);
   color: #fff;
   box-shadow: 0 2px 12px rgba(13, 45, 107, 0.25);

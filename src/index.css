@@ -1,25 +1,25 @@
 /* VicColors from original VicColors.kt */
 :root {
-  --vic-app-bg: #E8ECEE;
-  --vic-white: #FFFFFF;
-  --vic-green: #2E7D32;
-  --vic-green-bright: #43C31E;
-  --vic-navy: #0D2D6B;
-  --vic-navy-dark: #1E2D3D;
-  --vic-navy-mid: #2D3A4A;
-  --vic-mint: #B5D9BB;
-  --vic-text-primary: #1A2A3A;
-  --vic-text-secondary: #6B7C8D;
-  --vic-text-muted: #8A9AB0;
-  --vic-error-red: #D32F2F;
-  --vic-error-bg: #FDECEA;
-  --vic-divider: #E8EAED;
-  --vic-nav-border: #E0E4E8;
-  --vic-card-bg: #FFFFFF;
-  --vic-input-bg: #F5F6F8;
-  --vic-font: Roboto, "Helvetica Neue", Arial, sans-serif;
-  /* Fixed bottom nav height (content area); safe-area is added on the nav itself */
-  --bottom-nav-height: 64px;
+  --vic-app-bg: #e8ecee;
+  --vic-white: #ffffff;
+  --vic-green: #2e7d32;
+  --vic-green-bright: #43c31e;
+  --vic-navy: #0d2d6b;
+  --vic-navy-dark: #1e2d3d;
+  --vic-navy-mid: #2d3a4a;
+  --vic-mint: #b5d9bb;
+  --vic-text-primary: #1a2a3a;
+  --vic-text-secondary: #6b7c8d;
+  --vic-text-muted: #8a9ab0;
+  --vic-error-red: #d32f2f;
+  --vic-error-bg: #fdecea;
+  --vic-divider: #e8eaed;
+  --vic-nav-border: #e0e4e8;
+  --vic-card-bg: #ffffff;
+  --vic-input-bg: #f5f6f8;
+  --vic-font: Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* Must match BottomNav content height (safe-area added separately) */
+  --bottom-nav-height: 56px;
 }
 
 *,
@@ -35,8 +35,9 @@ html {
 }
 
 html,
-body,
-#root {
+body {
+  margin: 0;
+  width: 100%;
   height: 100%;
   min-height: 100%;
   min-height: 100dvh;
@@ -46,7 +47,6 @@ body,
 }
 
 body {
-  margin: 0;
   font-family: var(--vic-font);
   font-size: 16px;
   line-height: 1.5;
@@ -58,7 +58,7 @@ body {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
-  /* Top / sides only — bottom safe area is handled by fixed BottomNav */
+  /* Safe areas: top/sides on body; bottom handled by fixed BottomNav */
   padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0
     env(safe-area-inset-left, 0px);
 }
@@ -66,6 +66,10 @@ body {
 #root {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  min-height: -webkit-fill-available;
 }
 
 button {
@@ -81,7 +85,6 @@ img {
   font-variant-numeric: tabular-nums;
 }
 
-/* Installed PWA / standalone / fullscreen — hide browser chrome affordances */
 @media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
   body {
     user-select: none;
@@ -94,7 +97,6 @@ img {
   }
 }
 
-/* iOS standalone / home-screen web app */
 @supports (-webkit-touch-callout: none) {
   html {
     height: -webkit-fill-available;
@@ -103,17 +105,13 @@ img {
   body,
   #root {
     min-height: -webkit-fill-available;
+    height: -webkit-fill-available;
   }
 }
 
-/* Prefer full viewport when launched from home screen */
 @media all and (display-mode: standalone), all and (display-mode: fullscreen) {
   html,
-  body {
-    height: 100%;
-    overflow: hidden;
-  }
-
+  body,
   #root {
     height: 100%;
     overflow: hidden;

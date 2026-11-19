@@ -209,3 +209,4 @@ See **AUTH_DEPLOYMENT.md** (dashboard-oriented steps).
 - Node proxy **removed**.
 - Frontend calls Worker with `VITE_APP_API_KEY` + `VITE_WORKER_URL`.
 - Session token in `sessionStorage`.
+2026-11-19 production zip: height fix, install banner, auth cast, QR scanner

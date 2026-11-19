@@ -1,5 +1,4 @@
 .bottom-nav {
-  --bottom-nav-height: 56px;
   position: fixed;
   left: 0;
   right: 0;
@@ -8,11 +7,12 @@
   display: flex;
   align-items: stretch;
   justify-content: space-around;
-  height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  height: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: #ffffff;
   border-top: 1px solid #d8dee6;
   box-shadow: 0 -2px 12px rgba(13, 45, 107, 0.06);
+  box-sizing: border-box;
 }
 
 .bottom-nav__item {

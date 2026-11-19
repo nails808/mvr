@@ -31,73 +31,75 @@ export function LoginScreen() {
   return (
     <div className="login-screen">
       <InstallBanner />
-      <div className="login-screen__brand">
-        <img src={vlogo} alt="" className="login-screen__logo" />
-        <span className="login-screen__wordmark">myVicRoads</span>
-      </div>
-
-      {step === 'choice' && (
-        <div className="login-screen__panel">
-          <p className="login-screen__lead">Log in to your myVicRoads account</p>
-          <button
-            type="button"
-            className="login-btn login-btn--primary"
-            onClick={() => setStep('form')}
-          >
-            Log in
-          </button>
-          <p className="login-screen__hint">Don&apos;t have an account?</p>
-          <button type="button" className="login-btn login-btn--secondary" disabled>
-            Sign up
-          </button>
-          <button type="button" className="login-screen__scan" disabled>
-            Scan QR Code
-          </button>
+      <div className="login-screen__body">
+        <div className="login-screen__brand">
+          <img src={vlogo} alt="" className="login-screen__logo" />
+          <span className="login-screen__wordmark">myVicRoads</span>
         </div>
-      )}
 
-      {step === 'form' && (
-        <form className="login-screen__panel login-screen__form" onSubmit={onSubmit}>
-          <p className="login-screen__lead">Log in to your myVicRoads account</p>
-          <label className="login-field">
-            <span>Username</span>
-            <input
-              autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </label>
-          <label className="login-field">
-            <span>Password</span>
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </label>
-          {error && (
-            <p className="login-screen__error" role="alert">
-              {error}
-            </p>
-          )}
-          <button type="submit" className="login-btn login-btn--primary" disabled={busy}>
-            {busy ? 'Signing in…' : 'Log in'}
-          </button>
-          <button
-            type="button"
-            className="login-btn login-btn--secondary"
-            onClick={() => {
-              setStep('choice');
-              setError('');
-            }}
-          >
-            Back
-          </button>
-        </form>
-      )}
+        {step === 'choice' && (
+          <div className="login-screen__panel">
+            <p className="login-screen__lead">Log in to your myVicRoads account</p>
+            <button
+              type="button"
+              className="login-btn login-btn--primary"
+              onClick={() => setStep('form')}
+            >
+              Log in
+            </button>
+            <p className="login-screen__hint">Don&apos;t have an account?</p>
+            <button type="button" className="login-btn login-btn--secondary" disabled>
+              Sign up
+            </button>
+            <button type="button" className="login-screen__scan" disabled>
+              Scan QR Code
+            </button>
+          </div>
+        )}
+
+        {step === 'form' && (
+          <form className="login-screen__panel login-screen__form" onSubmit={onSubmit}>
+            <p className="login-screen__lead">Log in to your myVicRoads account</p>
+            <label className="login-field">
+              <span>Username</span>
+              <input
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </label>
+            <label className="login-field">
+              <span>Password</span>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </label>
+            {error && (
+              <p className="login-screen__error" role="alert">
+                {error}
+              </p>
+            )}
+            <button type="submit" className="login-btn login-btn--primary" disabled={busy}>
+              {busy ? 'Signing in…' : 'Log in'}
+            </button>
+            <button
+              type="button"
+              className="login-btn login-btn--secondary"
+              onClick={() => {
+                setStep('choice');
+                setError('');
+              }}
+            >
+              Back
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 }
