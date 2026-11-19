@@ -22,7 +22,6 @@ export type LoginResult = {
 export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
 export type AuthState = {
-export type AuthState = {
   status: AuthStatus;
   username: string | null;
   login: (username: string, password: string) => Promise<LoginResult>;
@@ -43,15 +42,10 @@ const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = [
 
 type TimerId = ReturnType<typeof window.setTimeout>;
 
-type TimerId = ReturnType<typeof window.setTimeout>;
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [username, setUsername] = useState<string | null>(null);
 
-  const idleTimerRef = useRef<TimerId | null>(null);
-  const validateTimerRef = useRef<TimerId | null>(null);
-  const lastActivityRef = useRef(Date.now());
   const idleTimerRef = useRef<TimerId | null>(null);
   const validateTimerRef = useRef<TimerId | null>(null);
   const lastActivityRef = useRef(Date.now());
@@ -79,9 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async (): Promise<boolean> => {
     const data = await fetchSession();
     if (data.ok === true) {
-    if (data.ok === true) {
       setStatus('authenticated');
-      setUsername(typeof data.username === 'string' ? data.username : null);
       setUsername(typeof data.username === 'string' ? data.username : null);
       return true;
     }
