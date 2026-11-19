@@ -40,7 +40,9 @@ const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = [
   'wheel',
 ];
 
-type TimerId = ReturnType<typeof window.setTimeout>;
+// Browser timer handles are numeric, even when Node timer declarations are
+// also present in the dependency type graph.
+type TimerId = number;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading');

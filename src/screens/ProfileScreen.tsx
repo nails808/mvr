@@ -23,20 +23,6 @@ function Chevron() {
   );
 }
 
-function ExternalIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M14 4h6v6M10 14L20 4M14 20H5a1 1 0 0 1-1-1V8"
-        stroke="#1A2A3A"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function LogoutIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
