@@ -75,7 +75,7 @@ export function MyVehiclesScreen({ userData, onBack }: MyVehiclesScreenProps) {
   <button
     type="button"
     className="stack-top__back"
-    onClick={handleBack}
+    onClick={onBack}
     aria-label="Back"
   >
     ‹
