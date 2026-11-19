@@ -170,12 +170,18 @@ function App() {
           </div>
         )}
         <div className="stack-screen">
-          <header className="stack-header">
-            <button type="button" className="stack-back" onClick={handleBack}>
-              ‹ Back
-            </button>
-            <h1>Demerit points</h1>
-          </header>
+<header className="stack-top">
+  <button
+    type="button"
+    className="stack-top__back"
+    onClick={handleBack}
+    aria-label="Back"
+  >
+    ‹
+  </button>
+  <h1 className="stack-top__title">Demerit points</h1>
+  <span className="stack-top__spacer" aria-hidden />
+</header>
           <div className="stack-scroll">
             <DemeritScreen userData={userData} onUserDataChange={handleUserDataChange} />
           </div>

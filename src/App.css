@@ -117,6 +117,49 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Shared stack top bar — matches View Licence back placement */
+.stack-top {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  padding: 12px 8px 4px;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex-shrink: 0;
+}
+
+.stack-top__back {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  font-size: 28px;
+  line-height: 1;
+  color: #1a1a1a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+}
+
+.stack-top__title {
+  margin: 0;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.stack-top__spacer {
+  width: 44px;
+  height: 1px;
+}
+
 .stack-body {
   padding: 20px 16px;
   max-width: 480px;
