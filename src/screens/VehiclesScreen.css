@@ -180,20 +180,18 @@
   margin-top: 0;
 }
 
-.vehicles-header--compact {
-  justify-content: flex-end;
-  margin-bottom: 8px;
-  padding: 0 16px;
-  margin-top: 8px;
+.vehicles-screen--detail {
+  padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
 }
 
-.vehicles-screen--detail {
-  padding-top: 8px;
+.vehicles-screen--detail .vehicle-hero,
+.vehicles-screen--detail .vehicles-section {
+  padding-left: 16px;
+  padding-right: 16px;
 }
-.vehicles-header--compact {
-  justify-content: flex-end;
-  margin-bottom: 8px;
-}
+
 
 
 

@@ -11,4 +11,6 @@ export type StackDest =
   | 'myVehicles'
   | 'qrScanner'
   | 'cameraPermission'
+  | 'feedback'
+  | 'help'
   | null;

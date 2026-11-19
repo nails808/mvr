@@ -11,6 +11,8 @@ interface ProfileScreenProps {
   onUserDataChange: (data: UserData) => void;
   onPhotoChange: (uri: string | null) => void;
   onScanQr?: () => void;
+  onFeedback?: () => void;
+  onHelp?: () => void;
 }
 
 function Chevron() {
@@ -55,6 +57,8 @@ export function ProfileScreen({
   onUserDataChange,
   onPhotoChange,
   onScanQr,
+  onFeedback,
+  onHelp,
 }: ProfileScreenProps) {
   const { logout } = useAuth();
   const [showEditor, setShowEditor] = useState(false);
@@ -116,13 +120,17 @@ export function ProfileScreen({
           </span>
           <Chevron />
         </button>
-        <button type="button" className="profile-item">
+        <button type="button" className="profile-item" onClick={() => onHelp?.()}>
           <span className="profile-item__label">Help and info</span>
           <Chevron />
         </button>
-        <button type="button" className="profile-item profile-item--last">
+        <button
+          type="button"
+          className="profile-item profile-item--last"
+          onClick={() => onFeedback?.()}
+        >
           <span className="profile-item__label">Provide app feedback</span>
-          <ExternalIcon />
+          <Chevron />
         </button>
       </section>
 

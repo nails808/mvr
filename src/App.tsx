@@ -14,12 +14,14 @@ import { DemeritScreen } from './screens/DemeritScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { QrScannerScreen } from './screens/QrScannerScreen';
 import { CameraPermissionScreen } from './screens/CameraPermissionScreen';
+import { FeedbackScreen } from './screens/FeedbackScreen';
+import { HelpInfoScreen } from './screens/HelpInfoScreen';
 import { useAuth } from './auth/AuthContext';
 import './App.css';
 import './screens/Placeholder.css';
 
 function App() {
-  const { status } = useAuth();
+  const { status, username } = useAuth();
 
   const [tab, setTab] = useState<NavTab>('Home');
   const [stack, setStack] = useState<StackDest>(null);
@@ -161,6 +163,25 @@ function App() {
     );
   }
 
+  if (stack === 'help') {
+    return (
+      <div className="app app--stack-enter">
+        <HelpInfoScreen onBack={handleBack} />
+      </div>
+    );
+  }
+
+  if (stack === 'feedback') {
+    return (
+      <div className="app app--stack-enter">
+        <FeedbackScreen
+          username={username || ''}
+          onBack={handleBack}
+        />
+      </div>
+    );
+  }
+
   if (stack === 'demerit') {
     return (
       <div className="app app--stack-enter">
@@ -170,18 +191,18 @@ function App() {
           </div>
         )}
         <div className="stack-screen">
-<header className="stack-top">
-  <button
-    type="button"
-    className="stack-top__back"
-    onClick={handleBack}
-    aria-label="Back"
-  >
-    ‹
-  </button>
-  <h1 className="stack-top__title">Demerit points</h1>
-  <span className="stack-top__spacer" aria-hidden />
-</header>
+          <header className="stack-top">
+            <button
+              type="button"
+              className="stack-top__back"
+              onClick={handleBack}
+              aria-label="Back"
+            >
+              ‹
+            </button>
+            <h1 className="stack-top__title">Demerit points</h1>
+            <span className="stack-top__spacer" aria-hidden />
+          </header>
           <div className="stack-scroll">
             <DemeritScreen userData={userData} onUserDataChange={handleUserDataChange} />
           </div>
@@ -222,6 +243,8 @@ function App() {
             onUserDataChange={handleUserDataChange}
             onPhotoChange={handlePhotoChange}
             onScanQr={() => void startQrFlow()}
+            onFeedback={() => setStack('feedback')}
+            onHelp={() => setStack('help')}
           />
         );
         break;

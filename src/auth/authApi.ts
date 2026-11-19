@@ -113,27 +113,48 @@ export async function applyRemoteForceRefresh(forceRefreshAt?: string | null): P
 export async function loginRequest(username: string, password: string) {
   if (!WORKER_URL || !APP_API_KEY) {
     return {
-      status: 500,
+      status: 0,
       data: {
         ok: false,
-        error: 'Auth not configured. Set VITE_WORKER_URL and VITE_APP_API_KEY.',
+        error:
+          'Auth not configured. Rebuild with VITE_WORKER_URL and VITE_APP_API_KEY set in .env',
       },
     };
   }
-  const res = await fetch(`${WORKER_URL}/auth/login`, {
-    method: 'POST',
-    headers: workerHeaders(),
-    body: JSON.stringify({ username, password }),
-  });
-  const data = await parseJson(res);
-  if (data?.ok && data.token) {
-    storeSession(String(data.token), String(data.username || username));
-    // Apply force-refresh after login if admin has issued /refresh
-    if (data.forceRefreshAt) {
-      await applyRemoteForceRefresh(String(data.forceRefreshAt));
+  try {
+    const res = await fetch(`${WORKER_URL}/auth/login`, {
+      method: 'POST',
+      mode: 'cors',
+      headers: workerHeaders(),
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await parseJson(res);
+    if (data?.ok && data.token) {
+      storeSession(String(data.token), String(data.username || username));
+      if (data.forceRefreshAt) {
+        await applyRemoteForceRefresh(String(data.forceRefreshAt));
+      }
     }
+    // Prefer server error text (Invalid credentials / Invalid API key / etc.)
+    if (!data?.ok && !data?.error) {
+      data.error =
+        res.status === 401
+          ? 'Invalid credentials or API key'
+          : res.status === 0
+            ? 'Unable to reach authentication service'
+            : `Login failed (HTTP ${res.status})`;
+    }
+    return { status: res.status, data };
+  } catch {
+    return {
+      status: 0,
+      data: {
+        ok: false,
+        error:
+          'Unable to reach authentication service. Check network, VITE_WORKER_URL, and that the Worker is deployed.',
+      },
+    };
   }
-  return { status: res.status, data };
 }
 
 export async function fetchSession(): Promise<SessionInfo | { ok: false; error?: string }> {
@@ -196,4 +217,36 @@ export async function fetchMotd(): Promise<string> {
     /* ignore */
   }
   return '';
+}
+
+
+/** Submit app feedback → Worker posts to Telegram admin chat(s) */
+export async function submitFeedback(
+  feedback: string,
+  username: string
+): Promise<{ ok: boolean; error?: string }> {
+  if (!WORKER_URL || !APP_API_KEY) {
+    return { ok: false, error: 'Auth not configured' };
+  }
+  try {
+    const token = getStoredToken();
+    const res = await fetch(`${WORKER_URL}/auth/feedback`, {
+      method: 'POST',
+      mode: 'cors',
+      headers: workerHeaders(),
+      body: JSON.stringify({
+        feedback,
+        username,
+        token,
+      }),
+    });
+    const data = await parseJson(res);
+    if (data?.ok) return { ok: true };
+    return {
+      ok: false,
+      error: typeof data?.error === 'string' ? data.error : 'Could not send feedback',
+    };
+  } catch {
+    return { ok: false, error: 'Unable to reach server' };
+  }
 }

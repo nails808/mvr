@@ -71,18 +71,18 @@ export function MyVehiclesScreen({ userData, onBack }: MyVehiclesScreenProps) {
   return (
     <div className="vehicles-screen vehicles-screen--detail">
       {onBack ? (
-       <header className="stack-top">
-  <button
-    type="button"
-    className="stack-top__back"
-    onClick={onBack}
-    aria-label="Back"
-  >
-    ‹
-  </button>
-  <h1 className="stack-top__title">Registered vehicles</h1>
-  <span className="stack-top__spacer" aria-hidden />
-</header>
+        <header className="stack-top">
+          <button
+            type="button"
+            className="stack-top__back"
+            onClick={onBack}
+            aria-label="Back"
+          >
+            ‹
+          </button>
+          <h1 className="stack-top__title">Registered vehicles</h1>
+          <span className="stack-top__spacer" aria-hidden />
+        </header>
       ) : null}
 
       <section className="vehicle-hero">
