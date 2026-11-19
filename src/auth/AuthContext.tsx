@@ -40,7 +40,9 @@ const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = [
   'wheel',
 ];
 
-type TimerId = ReturnType<typeof window.setTimeout>;
+// These timers run in the browser; use the DOM timer handle rather than the
+// Node.js `Timeout` type that can leak in through dependency declarations.
+type TimerId = number;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading');
