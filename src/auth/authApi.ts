@@ -142,11 +142,18 @@ export async function fetchSession(): Promise<SessionInfo | { ok: false; error?:
   if (!WORKER_URL || !APP_API_KEY) {
     return { ok: false, error: 'Auth not configured' };
   }
-  const res = await fetch(`${WORKER_URL}/auth/validate`, {
-    method: 'POST',
-    headers: workerHeaders(),
-    body: JSON.stringify({ token }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${WORKER_URL}/auth/validate`, {
+      method: 'POST',
+      headers: workerHeaders(),
+      body: JSON.stringify({ token }),
+    });
+  } catch {
+    // A network failure during startup must not leave AuthProvider in `loading`
+    // forever. Keep the stored token so a later reload can validate it again.
+    return { ok: false, error: 'Unable to reach authentication service' };
+  }
   const data = await parseJson(res);
   if (data?.ok) {
     if (data.username) sessionStorage.setItem(USER_KEY, String(data.username));
