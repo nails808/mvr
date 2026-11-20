@@ -18,7 +18,7 @@
   --vic-card-bg: #ffffff;
   --vic-input-bg: #f5f6f8;
   --vic-font: Roboto, 'Helvetica Neue', Arial, sans-serif;
-  /* Must match BottomNav content height (safe-area added separately) */
+  /* BottomNav content row height; its safe-area inset is included in its box. */
   --bottom-nav-height: 56px;
 }
 

@@ -9,9 +9,11 @@
   align-items: stretch;
   justify-content: space-around;
   /* Content row only; home-indicator inset is padding below (not double-counted in height) */
-  height: var(--bottom-nav-height, 56px);
+  /* Keep the safe-area inset inside the fixed bar's box so its painted
+     background reaches the bottom edge on notched mobile devices. */
+  height: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  box-sizing: content-box;
+  box-sizing: border-box;
   margin: 0;
   background: #ffffff;
   border-top: 1px solid #d8dee6;

@@ -1,6 +1,3 @@
-# myVicRoads PWA — Reconstruction Log
-
-**Project:** Progressive Web App reconstruction of the myVicRoads Android application  
 **Stack:** Vite + React + TypeScript · vite-plugin-pwa · JsBarcode · qrcode  
 **App version shown:** 1.3.7 (Profile → edit entry)
 
@@ -146,18 +143,6 @@
 | `src/data/UserRepository.ts` | Persistence |
 | `src/data/VerificationRepository.ts` | QR session helpers |
 
----
-
-## Run
-
-```bash
-unzip myvicroads-pwa.zip
-cd myvicroads-pwa
-npm install
-npm run dev
-```
-
-Build: `npm run build` (TypeScript 5.8.3 + Vite).
 
 ---
 
