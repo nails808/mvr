@@ -37,8 +37,7 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  /* Space for the fixed nav, including its safe-area inset. */
-  padding-bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: 0;
 }
 
 .app-main--full {

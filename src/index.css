@@ -58,9 +58,7 @@ body {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
-  /* Safe areas: top/sides on body; bottom handled by fixed BottomNav */
-  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0
-    env(safe-area-inset-left, 0px);
+  padding: 0;
 }
 
 #root {
@@ -71,6 +69,8 @@ body {
   min-height: 100%;
   min-height: -webkit-fill-available;
   min-height: 100dvh;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 button {

@@ -1,17 +1,10 @@
 .bottom-nav {
-  position: fixed;
-  left: 0;
-  right: 0;
-  /* Extend through the iOS safe area when the fixed-position viewport
-     stops at the content edge instead of the physical screen edge. */
-  bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+  position: relative;
+  flex: 0 0 auto;
   width: 100%;
-  z-index: 200;
   display: flex;
   align-items: stretch;
   justify-content: space-around;
-  /* Keep the safe-area inset inside the fixed bar's box so its painted
-     background reaches the bottom edge on notched mobile devices. */
   height: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
   box-sizing: border-box;
