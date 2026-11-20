@@ -1,7 +1,3 @@
-# Authentication + Telegram bot deployment
-
-## Important
-`VITE_APP_API_KEY` is **embedded in client JavaScript**. Anyone can extract it from the browser bundle and call your Worker.
 
 ## Frontend env
 Copy `.env.example` → `.env`:

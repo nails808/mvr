@@ -110,7 +110,7 @@
 - Full vehicle field list (read-only on page; edit via Profile version modal).
 
 ### Bottom nav (`BottomNav`)
-- Home: VicRoads-style mark; green + pill when active.
+- Home: green + pill when active.
 - Active states for Home, Licence, Payments, Profile (green + soft pill).
 - Vehicles icon; dollar Payments icon; Profile person icon.
 
@@ -154,7 +154,7 @@
 - Added:
   1. **Cloudflare Worker** (`worker/`) — D1 users/sessions/history + Telegram admin bot.
   2. **Thin Node proxy** (`server/server.js`, native `http`) — holds API key, sets HttpOnly cookie.
-  3. **LoginScreen** matching VicRoads login reference.
+  3. **LoginScreen** matching login reference.
   4. **AuthProvider** gates entire app; Profile **Log out** calls `/api/auth/logout`.
 
 ### Worker endpoints
