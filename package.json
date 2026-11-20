@@ -15,25 +15,29 @@
     "build:prod": "vite build"
   },
   "dependencies": {
+    "@capacitor/android": "^7.6.10",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/browser": "^7.0.0",
+    "@capacitor/core": "^7.6.10",
+    "@capacitor/status-bar": "^7.0.0",
+    "jsbarcode": "^3.11.6",
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.1.1",
-    "jsbarcode": "^3.11.6",
-    "@capacitor/core": "^7.2.0",
-    "@capacitor/android": "^7.2.0",
-    "@capacitor/app": "^7.0.0",
-    "@capacitor/browser": "^7.0.0",
-    "@capacitor/status-bar": "^7.0.0"
+    "react-router-dom": "^7.1.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.6.10",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "5.8.3",
     "vite": "^6.0.6",
-    "vite-plugin-pwa": "^0.21.1",
-    "@capacitor/cli": "^7.2.0"
+    "vite-plugin-pwa": "^0.21.1"
+  },
+  "allowScripts": {
+    "fsevents@2.3.3": true,
+    "esbuild@0.25.12": true
   }
 }
