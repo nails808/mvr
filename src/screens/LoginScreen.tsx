@@ -4,7 +4,11 @@ import vlogo from '../assets/vlogo_nobg.png';
 import { InstallBanner } from '../components/InstallBanner';
 import './LoginScreen.css';
 
-export function LoginScreen() {
+interface LoginScreenProps {
+  onScanQr: () => void;
+}
+
+export function LoginScreen({ onScanQr }: LoginScreenProps) {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -51,7 +55,7 @@ export function LoginScreen() {
             <button type="button" className="login-btn login-btn--secondary" disabled>
               Sign up
             </button>
-            <button type="button" className="login-screen__scan" disabled>
+            <button type="button" className="login-screen__scan" onClick={onScanQr}>
               Scan QR Code
             </button>
           </div>

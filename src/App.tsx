@@ -105,14 +105,6 @@ function App() {
     );
   }
 
-  if (status === 'anonymous') {
-    return (
-      <div className="app app--auth">
-        <LoginScreen />
-      </div>
-    );
-  }
-
   if (stack === 'qrScanner') {
     return (
       <QrScannerScreen
@@ -139,6 +131,19 @@ function App() {
           setCameraDenied(true);
         }}
       />
+    );
+  }
+
+  if (status === 'anonymous') {
+    return (
+      <div className="app app--auth">
+        <LoginScreen
+          onScanQr={() => {
+            setCameraDenied(false);
+            setStack('cameraPermission');
+          }}
+        />
+      </div>
     );
   }
 
