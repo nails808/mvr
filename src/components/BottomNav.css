@@ -2,7 +2,9 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
+  /* Extend through the iOS safe area when the fixed-position viewport
+     stops at the content edge instead of the physical screen edge. */
+  bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
   width: 100%;
   z-index: 200;
   display: flex;
@@ -17,8 +19,6 @@
   background: #ffffff;
   border-top: 1px solid #d8dee6;
   box-shadow: 0 -2px 12px rgba(13, 45, 107, 0.06);
-  /* Keep above iOS home indicator / browser chrome */
-  transform: translateZ(0);
 }
 
 .bottom-nav__item {
