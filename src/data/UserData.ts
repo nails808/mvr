@@ -38,8 +38,8 @@ export interface UserData {
 
 /** Default sample data matching the original APK constructor defaults */
 export const DEFAULT_USER_DATA: UserData = {
-  firstName: 'Alex',
-  lastName: 'Sample',
+  firstName: 'John',
+  lastName: 'Citizen',
   licenceNumber: '012345678',
   licenceExpiry: '01 Jan 2028',
   licenceType: 'Car',
