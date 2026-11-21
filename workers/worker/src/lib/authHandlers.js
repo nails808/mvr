@@ -1,9 +1,17 @@
 import { FORCE_REFRESH_KEY, MOTD_KEY, expiresIso, nowIso, normUsername, adminIds } from './constants.js';
 import { randomBytes, sha256Hex, verifyPassword, bufToHex } from './crypto.js';
-import { ensureSchema, getSetting, isAccountExpired, purgeExpiredUser } from './db.js';
+import {
+  ensureSchema,
+  getSetting,
+  isAccountExpired,
+  purgeExpiredUser,
+  upsertPushSubscription,
+  deletePushSubscription,
+} from './db.js';
 import { badRequest, json, requireAppKey, unauthorized } from './http.js';
 import { rateLimitOk } from './rateLimit.js';
 import { telegramSend } from './telegram.js';
+import { pushToUser } from './webpush.js';
 
 export async function handleLogin(request, env) {
   if (!requireAppKey(request, env)) return unauthorized('Invalid API key');
@@ -32,6 +40,24 @@ export async function handleLogin(request, env) {
   if (!(await verifyPassword(password, user.password_salt, user.password_hash))) {
     return unauthorized('Invalid credentials');
   }
+
+  // Simultaneous login: notify existing session(s) before kicking them
+  const existing = await env.DB.prepare(`SELECT id FROM sessions WHERE user_id = ?`)
+    .bind(user.id)
+    .first();
+  if (existing) {
+    try {
+      await pushToUser(env, user.id, {
+        title: 'myVicRoads',
+        body: 'You were logged out because your account was signed in on another device.',
+        tag: 'session-kick',
+        reason: 'simultaneous_login',
+      });
+    } catch {
+      /* best-effort */
+    }
+  }
+
   await env.DB.prepare(`DELETE FROM sessions WHERE user_id = ?`).bind(user.id).run();
   const token = bufToHex(randomBytes(32));
   const tokenHash = await sha256Hex(token);
@@ -91,6 +117,17 @@ export async function handleValidate(request, env) {
     return unauthorized('Trial account expired. Please contact support.');
   }
   if (new Date(row.session_expires).getTime() <= Date.now()) {
+    // Inactivity logout — notify then delete
+    try {
+      await pushToUser(env, row.user_id, {
+        title: 'myVicRoads',
+        body: 'You were logged out due to inactivity. Please sign in again.',
+        tag: 'session-idle',
+        reason: 'inactivity',
+      });
+    } catch {
+      /* best-effort */
+    }
     await env.DB.prepare(`DELETE FROM sessions WHERE id = ?`).bind(row.id).run();
     return unauthorized('Session expired due to inactivity. Please log in again.');
   }
@@ -134,8 +171,6 @@ export async function handleMotd(request, env) {
 
 /**
  * POST /auth/feedback
- * Body: { feedback, username?, token? }
- * Forwards to Telegram admin chats: "<time> <user email> <feedback>"
  */
 export async function handleFeedback(request, env) {
   if (!requireAppKey(request, env)) return unauthorized('Invalid API key');
@@ -155,7 +190,6 @@ export async function handleFeedback(request, env) {
   let username = normUsername(body.username || '');
   const token = String(body.token || '').trim();
 
-  // Prefer identity from session token when provided
   if (token) {
     const tokenHash = await sha256Hex(token);
     const row = await env.DB.prepare(
@@ -171,17 +205,14 @@ export async function handleFeedback(request, env) {
   if (!username) username = 'unknown';
 
   const time = nowIso();
-  // Escape for Telegram HTML parse_mode
   const esc = (s) =>
     String(s)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
-  // Format: <time> <user email> <feedback>
   const message = `${time} ${esc(username)} ${esc(feedback)}`;
 
   const targets = adminIds(env);
-  // Optional dedicated feedback chat
   const extra = String(env.FEEDBACK_CHAT_ID || env.ADMIN_CHAT_ID || '').trim();
   if (extra) targets.push(extra);
 
@@ -203,3 +234,69 @@ export async function handleFeedback(request, env) {
   }
   return json({ ok: true, sent });
 }
+
+/**
+ * Resolve authenticated user from token. Returns { userId, username } or null.
+ */
+async function sessionUser(env, token) {
+  if (!token) return null;
+  const tokenHash = await sha256Hex(token);
+  const row = await env.DB.prepare(
+    `SELECT s.user_id, u.username, u.status, s.expires_at
+     FROM sessions s JOIN users u ON u.id = s.user_id
+     WHERE s.token_hash = ?`
+  )
+    .bind(tokenHash)
+    .first();
+  if (!row || row.status !== 'active') return null;
+  if (new Date(row.expires_at).getTime() <= Date.now()) return null;
+  return { userId: row.user_id, username: row.username };
+}
+
+/**
+ * POST /auth/push/subscribe
+ * Body: { token, endpoint, keys: { p256dh, auth } }
+ */
+export async function handlePushSubscribe(request, env) {
+  if (!requireAppKey(request, env)) return unauthorized('Invalid API key');
+  await ensureSchema(env);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return badRequest('Invalid JSON');
+  }
+  const user = await sessionUser(env, body.token);
+  if (!user) return unauthorized('Invalid session');
+
+  const endpoint = String(body.endpoint || '').trim();
+  const p256dh = String(body.keys?.p256dh || body.p256dh || '').trim();
+  const auth = String(body.keys?.auth || body.auth || '').trim();
+  if (!endpoint || !p256dh || !auth) return badRequest('endpoint, p256dh, auth required');
+  if (endpoint.length > 2048 || p256dh.length > 256 || auth.length > 256) {
+    return badRequest('Subscription fields too long');
+  }
+
+  await upsertPushSubscription(env, user.userId, endpoint, p256dh, auth);
+  return json({ ok: true });
+}
+
+/**
+ * POST /auth/push/unsubscribe
+ * Body: { token?, endpoint }
+ */
+export async function handlePushUnsubscribe(request, env) {
+  if (!requireAppKey(request, env)) return unauthorized('Invalid API key');
+  await ensureSchema(env);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return badRequest('Invalid JSON');
+  }
+  const endpoint = String(body.endpoint || '').trim();
+  if (!endpoint) return badRequest('endpoint required');
+  await deletePushSubscription(env, endpoint);
+  return json({ ok: true });
+}
+

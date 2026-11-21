@@ -1,10 +1,19 @@
 /**
  * myVicRoads auth Worker (modular)
- * POST /auth/login | validate | logout | motd
+ * POST /auth/login | validate | logout | motd | feedback
+ * POST /auth/push/subscribe | /auth/push/unsubscribe
  * POST /telegram
  * GET  /
  */
-import { handleLogin, handleLogout, handleMotd, handleValidate, handleFeedback } from './lib/authHandlers.js';
+import {
+  handleLogin,
+  handleLogout,
+  handleMotd,
+  handleValidate,
+  handleFeedback,
+  handlePushSubscribe,
+  handlePushUnsubscribe,
+} from './lib/authHandlers.js';
 import { adminIds, nowIso } from './lib/constants.js';
 import { ensureSchema } from './lib/db.js';
 import { json, withCors } from './lib/http.js';
@@ -41,6 +50,7 @@ export default {
           hasBotToken: Boolean(env.BOT_TOKEN),
           hasBotSecret: Boolean(env.BOT_SECRET),
           hasAppKey: Boolean(env.APP_API_KEY),
+          hasVapid: Boolean(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY),
           adminCount: adminIds(env).length,
         });
       } else if (
@@ -61,6 +71,10 @@ export default {
         res = await handleMotd(request, env);
       } else if (request.method === 'POST' && path === '/auth/feedback') {
         res = await handleFeedback(request, env);
+      } else if (request.method === 'POST' && path === '/auth/push/subscribe') {
+        res = await handlePushSubscribe(request, env);
+      } else if (request.method === 'POST' && path === '/auth/push/unsubscribe') {
+        res = await handlePushUnsubscribe(request, env);
       } else {
         res = json({ ok: false, error: 'Not found', path }, 404);
       }
