@@ -80,16 +80,15 @@ self.addEventListener('push', (event: PushEvent) => {
     /* keep defaults */
   }
 
-  event.waitUntil(
-    self.registration.showNotification(APP_TITLE, {
-      body,
-      tag,
-      icon: APP_ICON,
-      badge: APP_BADGE,
-      data,
-      renotify: true,
-    })
-  );
+  const options: NotificationOptions = {
+    body,
+    tag,
+    icon: APP_ICON,
+    badge: APP_BADGE,
+    data,
+    renotify: true,
+  };
+  event.waitUntil(self.registration.showNotification(APP_TITLE, options));
 });
 
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
