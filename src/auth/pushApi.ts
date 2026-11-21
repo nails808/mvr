@@ -25,21 +25,73 @@ export function pushSupported(): boolean {
   );
 }
 
+/** Current Notification.permission, or "unsupported". */
+export function getNotificationPermission(): NotificationPermission | 'unsupported' {
+  if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
+  return Notification.permission;
+}
+
+async function waitForServiceWorker(timeoutMs = 8000): Promise<ServiceWorkerRegistration> {
+  if (!('serviceWorker' in navigator)) {
+    throw new Error('Service worker not supported');
+  }
+
+  // Prefer an existing registration; otherwise wait for ready with timeout
+  const existing = await navigator.serviceWorker.getRegistration();
+  if (existing?.active || existing?.installing || existing?.waiting) {
+    return navigator.serviceWorker.ready;
+  }
+
+  const ready = navigator.serviceWorker.ready;
+  const timed = new Promise<never>((_, reject) => {
+    window.setTimeout(() => reject(new Error('Service worker not ready — rebuild as production PWA (npm run build)')), timeoutMs);
+  });
+  return Promise.race([ready, timed]);
+}
+
+/**
+ * Request notification permission (must be called from a user gesture on iOS)
+ * and register the push subscription with the Worker.
+ */
 export async function ensurePushSubscription(): Promise<{ ok: boolean; error?: string }> {
-  if (!pushSupported()) return { ok: false, error: 'Push not supported' };
-  if (!VAPID_PUBLIC_KEY) return { ok: false, error: 'VAPID public key not configured' };
-  if (!WORKER_URL || !APP_API_KEY) return { ok: false, error: 'Worker not configured' };
+  if (!pushSupported()) {
+    return { ok: false, error: 'Push not supported on this device/browser' };
+  }
 
   const token = getStoredToken();
   if (!token) return { ok: false, error: 'Not logged in' };
 
+  // Ask for permission FIRST so the system dialog appears even if later config fails.
+  // On iOS this must run inside a user gesture (button tap / form submit).
+  let permission: NotificationPermission;
   try {
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      return { ok: false, error: 'Notification permission denied' };
-    }
+    permission = await Notification.requestPermission();
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : 'Could not request notification permission',
+    };
+  }
 
-    const reg = await navigator.serviceWorker.ready;
+  if (permission !== 'granted') {
+    return {
+      ok: false,
+      error:
+        permission === 'denied'
+          ? 'Notifications blocked — enable them in system Settings'
+          : 'Notification permission not granted',
+    };
+  }
+
+  if (!VAPID_PUBLIC_KEY) {
+    return { ok: false, error: 'VAPID public key not configured (VITE_VAPID_PUBLIC_KEY)' };
+  }
+  if (!WORKER_URL || !APP_API_KEY) {
+    return { ok: false, error: 'Worker not configured (VITE_WORKER_URL / VITE_APP_API_KEY)' };
+  }
+
+  try {
+    const reg = await waitForServiceWorker();
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
       sub = await reg.pushManager.subscribe({
@@ -72,4 +124,3 @@ export async function ensurePushSubscription(): Promise<{ ok: boolean; error?: s
     return { ok: false, error: e instanceof Error ? e.message : 'Subscribe error' };
   }
 }
-

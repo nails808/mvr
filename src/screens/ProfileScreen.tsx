@@ -1,8 +1,13 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { UserData } from '../data/UserData';
 import { EditDataModal } from '../components/EditDataModal';
 import { openVicRoads, VicRoadsPaths } from '../data/vicroadsLinks';
 import { useAuth } from '../auth/AuthContext';
+import {
+  ensurePushSubscription,
+  getNotificationPermission,
+  pushSupported,
+} from '../auth/pushApi';
 import './ProfileScreen.css';
 
 interface ProfileScreenProps {
@@ -37,6 +42,19 @@ function LogoutIcon() {
   );
 }
 
+function permissionHint(perm: NotificationPermission | 'unsupported'): string {
+  switch (perm) {
+    case 'granted':
+      return 'On — tap to re-register this device';
+    case 'denied':
+      return 'Blocked — enable in system Settings, then tap here';
+    case 'default':
+      return 'Tap to allow notifications';
+    default:
+      return 'Not supported on this browser';
+  }
+}
+
 export function ProfileScreen({
   userData,
   photoUri,
@@ -49,6 +67,33 @@ export function ProfileScreen({
   const { logout } = useAuth();
   const [showEditor, setShowEditor] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [perm, setPerm] = useState<NotificationPermission | 'unsupported'>(() =>
+    getNotificationPermission()
+  );
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushMsg, setPushMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPerm(getNotificationPermission());
+  }, []);
+
+  const onEnableNotifications = useCallback(async () => {
+    if (!pushSupported()) {
+      setPushMsg('Push not supported on this device');
+      setPerm(getNotificationPermission());
+      return;
+    }
+    setPushBusy(true);
+    setPushMsg(null);
+    const result = await ensurePushSubscription();
+    setPerm(getNotificationPermission());
+    setPushBusy(false);
+    if (result.ok) {
+      setPushMsg('Notifications enabled for this device');
+    } else {
+      setPushMsg(result.error || 'Could not enable notifications');
+    }
+  }, []);
 
   return (
     <div className="profile-screen">
@@ -89,6 +134,25 @@ export function ProfileScreen({
       {/* App controls */}
       <section className="profile-card">
         <h2 className="profile-card__heading">App controls</h2>
+        <button
+          type="button"
+          className="profile-item profile-item--multi"
+          disabled={pushBusy || perm === 'unsupported'}
+          onClick={() => void onEnableNotifications()}
+        >
+          <span className="profile-item__text">
+            <span className="profile-item__label">
+              {pushBusy ? 'Enabling notifications…' : 'Notifications'}
+            </span>
+            <span className="profile-item__hint">{permissionHint(perm)}</span>
+          </span>
+          <Chevron />
+        </button>
+        {pushMsg && (
+          <p className="profile-push-msg" role="status">
+            {pushMsg}
+          </p>
+        )}
         <button
           type="button"
           className="profile-item"
@@ -141,9 +205,9 @@ export function ProfileScreen({
         type="button"
         className="profile-version"
         onClick={() => setShowEditor(true)}
-        aria-label="App version 1.3.7 — edit details"
+        aria-label="App version 1.3.8 — edit details"
       >
-        App version 1.3.7
+        App version 1.3.8
       </button>
 
       {showEditor && (

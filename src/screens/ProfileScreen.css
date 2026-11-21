@@ -130,3 +130,11 @@
 .profile-version:active {
   color: #0d2d6b;
 }
+
+.profile-push-msg {
+  margin: 0;
+  padding: 0 16px 12px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #0d2d6b;
+}

@@ -166,8 +166,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data && data.ok) {
         setStatus('authenticated');
         setUsername(typeof data.username === 'string' ? data.username : user);
-        // Best-effort: register push after login
-        void ensurePushSubscription();
+        // Request notification permission while still in the login user-gesture chain
+        try {
+          await ensurePushSubscription();
+        } catch {
+          /* non-fatal */
+        }
         return { ok: true };
       }
       const message =
