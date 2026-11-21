@@ -5,8 +5,8 @@
  * Security note: any VITE_ secret is visible in the built JS bundle.
  */
 
-const WORKER_URL = (import.meta.env.VITE_WORKER_URL as string | undefined)?.replace(/\/+$/, '') || '';
-const APP_API_KEY = (import.meta.env.VITE_APP_API_KEY as string | undefined) || '';
+export const WORKER_URL = (import.meta.env.VITE_WORKER_URL as string | undefined)?.replace(/\/+$/, '') || '';
+export const APP_API_KEY = (import.meta.env.VITE_APP_API_KEY as string | undefined) || '';
 
 const TOKEN_KEY = 'mvr_session_token';
 const USER_KEY = 'mvr_session_user';
@@ -20,7 +20,7 @@ export type SessionInfo = {
   forceRefreshAt?: string;
 };
 
-function workerHeaders(): HeadersInit {
+export function workerHeaders(): HeadersInit {
   return {
     'content-type': 'application/json',
     'X-App-Api-Key': APP_API_KEY,

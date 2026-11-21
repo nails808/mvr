@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { fetchSession, loginRequest, logoutRequest } from './authApi';
+import { ensurePushSubscription } from './pushApi';
 
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
 const VALIDATE_WHILE_ACTIVE_MS = 45_000;
@@ -165,6 +166,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data && data.ok) {
         setStatus('authenticated');
         setUsername(typeof data.username === 'string' ? data.username : user);
+        // Best-effort: register push after login
+        void ensurePushSubscription();
         return { ok: true };
       }
       const message =
@@ -176,6 +179,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { ok: false, error: 'Unable to reach authentication service' };
     }
   }, []);
+
+
+  // Register push subscription when session becomes authenticated
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    void ensurePushSubscription();
+  }, [status]);
 
   // Force AuthState so Provider value always type-checks
   const value = {
