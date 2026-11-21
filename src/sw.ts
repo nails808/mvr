@@ -87,6 +87,7 @@ self.addEventListener('push', (event: PushEvent) => {
       icon: APP_ICON,
       badge: APP_BADGE,
       data,
+      renotify: true,
     })
   );
 });

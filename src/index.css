@@ -18,7 +18,7 @@
   --vic-card-bg: #ffffff;
   --vic-input-bg: #f5f6f8;
   --vic-font: Roboto, 'Helvetica Neue', Arial, sans-serif;
-  /* BottomNav content row height; its safe-area inset is included in its box. */
+  /* BottomNav content row height (safe-area is added as padding on the nav itself) */
   --bottom-nav-height: 56px;
 }
 
@@ -32,6 +32,8 @@ html {
   -webkit-text-size-adjust: 100%;
   height: 100%;
   height: -webkit-fill-available;
+  /* White underlay so any system inset below the nav matches the bar */
+  background-color: #ffffff;
 }
 
 html,
@@ -51,8 +53,8 @@ body {
   font-size: 16px;
   line-height: 1.5;
   color: var(--vic-text-primary);
-  background: var(--vic-app-bg);
-  background-color: var(--vic-app-bg);
+  /* Match nav so no gray strip appears under the bottom bar */
+  background-color: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   touch-action: manipulation;
@@ -71,6 +73,8 @@ body {
   min-height: 100dvh;
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
+  /* App content uses the soft grey; body stays white for the nav underlay */
+  background-color: var(--vic-app-bg);
 }
 
 button {
