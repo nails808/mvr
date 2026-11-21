@@ -37,7 +37,8 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  padding-bottom: 0;
+  /* Reserve space for fixed bottom nav + safe area */
+  padding-bottom: calc(var(--bottom-nav-height, 56px) + env(safe-area-inset-bottom, 0px));
 }
 
 .app-main--full {

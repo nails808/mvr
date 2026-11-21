@@ -167,7 +167,7 @@ export async function cmdKick(env, args) {
   if (!user) return `User <b>${u}</b> not found.`;
   try {
     await pushToUser(env, user.id, {
-      title: 'myVicRoads',
+      title: 'MyVicRoads',
       body: 'You were logged out by an administrator.',
       tag: 'session-kick',
       reason: 'admin_kick',
@@ -358,7 +358,7 @@ export async function cmdPush(env, args) {
     .first();
   if (!user) return `User <b>${u}</b> not found.`;
   const result = await pushToUser(env, user.id, {
-    title: 'myVicRoads',
+    title: 'MyVicRoads',
     body: message,
     tag: 'admin-push',
   });
@@ -374,7 +374,7 @@ export async function cmdShout(env, args) {
   if (!message) return 'Usage: /shout <message>';
   if (message.length > 500) return 'Message too long (max 500).';
   const result = await pushToAll(env, {
-    title: 'myVicRoads',
+    title: 'MyVicRoads',
     body: message,
     tag: 'admin-shout',
   });

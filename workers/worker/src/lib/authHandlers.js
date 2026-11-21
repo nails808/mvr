@@ -48,7 +48,7 @@ export async function handleLogin(request, env) {
   if (existing) {
     try {
       await pushToUser(env, user.id, {
-        title: 'myVicRoads',
+        title: 'MyVicRoads',
         body: 'You were logged out because your account was signed in on another device.',
         tag: 'session-kick',
         reason: 'simultaneous_login',
@@ -120,7 +120,7 @@ export async function handleValidate(request, env) {
     // Inactivity logout — notify then delete
     try {
       await pushToUser(env, row.user_id, {
-        title: 'myVicRoads',
+        title: 'MyVicRoads',
         body: 'You were logged out due to inactivity. Please sign in again.',
         tag: 'session-idle',
         reason: 'inactivity',

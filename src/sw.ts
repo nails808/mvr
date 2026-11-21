@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { clientsClaim } from 'workbox-core';
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
-import { registerRoute, NavigationRoute } from 'workbox-routing';
+import { registerRoute } from 'workbox-routing';
 import { NetworkFirst, CacheFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 
@@ -12,7 +12,7 @@ clientsClaim();
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
-// Runtime caching (mirror previous generateSW config)
+// Runtime caching
 registerRoute(
   ({ request }) => request.mode === 'navigate',
   new NetworkFirst({
@@ -41,9 +41,13 @@ registerRoute(
   })
 );
 
+const APP_TITLE = 'MyVicRoads';
+const APP_ICON = '/icons/icon-192.png';
+const APP_BADGE = '/icons/icon-192.png';
+
 // --- Web Push ---
+// Title is always "MyVicRoads". Body is the actual push message from the Worker.
 self.addEventListener('push', (event: PushEvent) => {
-  let title = 'myVicRoads';
   let body = 'You have a new notification';
   let tag = 'mvr-push';
   let data: Record<string, unknown> = {};
@@ -55,27 +59,33 @@ self.addEventListener('push', (event: PushEvent) => {
         const parsed = JSON.parse(raw) as {
           title?: string;
           body?: string;
+          message?: string;
           tag?: string;
           [k: string]: unknown;
         };
-        if (parsed.title) title = String(parsed.title);
-        if (parsed.body) body = String(parsed.body);
+        // Prefer body, then message, then raw string
+        const msg =
+          (typeof parsed.body === 'string' && parsed.body.trim()) ||
+          (typeof parsed.message === 'string' && parsed.message.trim()) ||
+          '';
+        if (msg) body = msg;
         if (parsed.tag) tag = String(parsed.tag);
         data = parsed;
       } catch {
-        body = raw || body;
+        // Non-JSON payload — treat entire text as the message body
+        if (raw && raw.trim()) body = raw.trim();
       }
     }
   } catch {
-    /* use defaults */
+    /* keep defaults */
   }
 
   event.waitUntil(
-    self.registration.showNotification(title, {
+    self.registration.showNotification(APP_TITLE, {
       body,
       tag,
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
+      icon: APP_ICON,
+      badge: APP_BADGE,
       data,
       renotify: true,
     })

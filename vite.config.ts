@@ -6,6 +6,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // Use injectManifest so src/sw.ts (with Web Push handlers) is the real SW
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       registerType: 'autoUpdate',
       includeAssets: [
         'icons/icon-192.png',
@@ -20,8 +24,6 @@ export default defineConfig({
         description: 'Digital Victorian driver licence and vehicle registration',
         theme_color: '#0D2D6B',
         background_color: '#E8ECEE',
-        // Prefer standalone app chrome (no browser UI). fullscreen first in override
-        // for platforms that support true immersive mode.
         display: 'standalone',
         display_override: ['fullscreen', 'standalone', 'minimal-ui', 'browser'],
         orientation: 'portrait',
@@ -52,33 +54,9 @@ export default defineConfig({
           },
         ],
       },
-      workbox: {
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,jpg,jpeg}'],
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api/],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/mvr-verify.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'verification-api',
-              networkTimeoutSeconds: 8,
-              expiration: { maxEntries: 20, maxAgeSeconds: 120 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images',
-              expiration: {
-                maxEntries: 60,
-                maxAgeSeconds: 60 * 60 * 24 * 30,
-              },
-            },
-          },
-        ],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
       devOptions: {
         enabled: false,
