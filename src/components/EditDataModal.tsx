@@ -1,7 +1,12 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
 import type { UserData } from '../data/UserData';
 import { fetchMotd } from '../auth/authApi';
+import {
+  ensurePushSubscription,
+  getNotificationPermission,
+  pushSupported,
+} from '../auth/pushApi';
 import './EditDataModal.css';
 
 interface EditDataModalProps {
@@ -49,11 +54,30 @@ const VEHICLE_FIELDS: { key: FieldKey; label: string; multiline?: boolean }[] = 
   { key: 'vehicleTransferInDispute', label: 'Transfer in dispute' },
 ];
 
+function permissionHint(perm: NotificationPermission | 'unsupported'): string {
+  switch (perm) {
+    case 'granted':
+      return 'On — tap the button to re-register this device';
+    case 'denied':
+      return 'Blocked — enable in system Settings, then try again';
+    case 'default':
+      return 'Tap the button to allow notifications';
+    default:
+      return 'Not supported on this browser';
+  }
+}
+
 export function EditDataModal({ userData, photoUri, onSave, onClose }: EditDataModalProps) {
   const [draft, setDraft] = useState<UserData>({ ...userData });
   const [photo, setPhoto] = useState<string | null>(photoUri);
   const [motd, setMotd] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const [perm, setPerm] = useState<NotificationPermission | 'unsupported'>(() =>
+    getNotificationPermission()
+  );
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushMsg, setPushMsg] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,6 +87,28 @@ export function EditDataModal({ userData, photoUri, onSave, onClose }: EditDataM
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    setPerm(getNotificationPermission());
+  }, []);
+
+  const onEnableNotifications = useCallback(async () => {
+    if (!pushSupported()) {
+      setPushMsg('Push not supported on this device');
+      setPerm(getNotificationPermission());
+      return;
+    }
+    setPushBusy(true);
+    setPushMsg(null);
+    const result = await ensurePushSubscription();
+    setPerm(getNotificationPermission());
+    setPushBusy(false);
+    if (result.ok) {
+      setPushMsg('Notifications enabled for this device');
+    } else {
+      setPushMsg(result.error || 'Could not enable notifications');
+    }
   }, []);
 
   const setField = (key: FieldKey, value: string) => {
@@ -83,7 +129,6 @@ export function EditDataModal({ userData, photoUri, onSave, onClose }: EditDataM
       if (typeof reader.result === 'string') setPhoto(reader.result);
     };
     reader.readAsDataURL(file);
-    e.target.value = '';
   };
 
   const handleSave = () => {
@@ -91,24 +136,24 @@ export function EditDataModal({ userData, photoUri, onSave, onClose }: EditDataM
     onClose();
   };
 
-  const renderFields = (fields: typeof LICENCE_FIELDS) =>
+  const renderFields = (fields: { key: FieldKey; label: string; multiline?: boolean }[]) =>
     fields.map(({ key, label, multiline }) => {
-      const raw = draft[key];
-      const value = typeof raw === 'string' || typeof raw === 'number' ? String(raw) : '';
+      const value = draft[key];
+      const str = value === null || value === undefined ? '' : String(value);
       return (
         <label key={key} className="edm-field">
           <span className="edm-field__label">{label}</span>
           {multiline ? (
             <textarea
               className="edm-field__input edm-field__textarea"
-              value={value}
-              rows={3}
+              value={str}
               onChange={(e) => setField(key, e.target.value)}
+              rows={3}
             />
           ) : (
             <input
               className="edm-field__input"
-              value={value}
+              value={str}
               onChange={(e) => setField(key, e.target.value)}
             />
           )}
@@ -136,6 +181,28 @@ export function EditDataModal({ userData, photoUri, onSave, onClose }: EditDataM
             {motd}
           </div>
         ) : null}
+
+        <section className="edm-section">
+          <h2 className="edm-section__title">Notifications</h2>
+          <p className="edm-push-hint">{permissionHint(perm)}</p>
+          <button
+            type="button"
+            className="edm-btn"
+            disabled={pushBusy || perm === 'unsupported'}
+            onClick={() => void onEnableNotifications()}
+          >
+            {pushBusy
+              ? 'Enabling…'
+              : perm === 'granted'
+                ? 'Re-register notifications'
+                : 'Enable notifications'}
+          </button>
+          {pushMsg ? (
+            <p className="edm-push-msg" role="status">
+              {pushMsg}
+            </p>
+          ) : null}
+        </section>
 
         <section className="edm-section">
           <h2 className="edm-section__title">Photo</h2>

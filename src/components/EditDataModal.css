@@ -181,3 +181,17 @@
   min-height: 72px;
   line-height: 1.4;
 }
+
+.edm-push-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #6b7c8d;
+}
+
+.edm-push-msg {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #0d2d6b;
+}
