@@ -80,14 +80,15 @@ self.addEventListener('push', (event: PushEvent) => {
     /* keep defaults */
   }
 
-  const options: NotificationOptions = {
+  // renotify is valid at runtime with tag; some DOM/WebWorker lib merges omit it on NotificationOptions
+  const options = {
     body,
     tag,
     icon: APP_ICON,
     badge: APP_BADGE,
     data,
     renotify: true,
-  };
+  } as NotificationOptions;
   event.waitUntil(self.registration.showNotification(APP_TITLE, options));
 });
 
