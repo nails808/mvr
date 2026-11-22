@@ -1,6 +1,49 @@
 /**
- * GET /pay/receipt/:id — CommBank-style money received screen
+ * GET /pay/receipt/:id — bank-styled money received screens
  */
+
+const THEMES = {
+  commbank: {
+    brand: 'CommBank',
+    topBg: '#ffcc00',
+    topFg: '#111111',
+    checkBg: '#118c4f',
+    accent: '#118c4f',
+    heroTitle: 'Money received',
+  },
+  westpac: {
+    brand: 'Westpac',
+    topBg: '#d5002b',
+    topFg: '#ffffff',
+    checkBg: '#d5002b',
+    accent: '#d5002b',
+    heroTitle: 'Payment received',
+  },
+  anz: {
+    brand: 'ANZ',
+    topBg: '#007dba',
+    topFg: '#ffffff',
+    checkBg: '#007dba',
+    accent: '#007dba',
+    heroTitle: 'Money in',
+  },
+  nab: {
+    brand: 'NAB',
+    topBg: '#c1007e',
+    topFg: '#ffffff',
+    checkBg: '#c1007e',
+    accent: '#c1007e',
+    heroTitle: 'You have been paid',
+  },
+  up: {
+    brand: 'Up',
+    topBg: '#ff7a00',
+    topFg: '#ffffff',
+    checkBg: '#111111',
+    accent: '#ff7a00',
+    heroTitle: 'Ka-ching',
+  },
+};
 
 function escapeHtml(s) {
   return String(s ?? '')
@@ -26,43 +69,45 @@ function formatWhen(ts) {
   }
 }
 
-/** Normalize amount display e.g. $50 / 50.00 → keep as provided, ensure $ prefix if numeric */
 function displayAmount(amount) {
   const a = String(amount || '').trim();
   if (!a) return '$0.00';
   if (a.includes('$')) return a;
-  // if looks like number, prefix $
   if (/^-?[\d,]+(\.\d+)?$/.test(a.replace(/\s/g, ''))) {
     return `$${a.replace(/\s/g, '')}`;
   }
   return a;
 }
 
-function receiptHtml({ amount, senderName, createdAt, receiptId }) {
+function receiptHtml({ amount, senderName, createdAt, receiptId, bank }) {
+  const theme = THEMES[bank] || THEMES.commbank;
   const amt = escapeHtml(displayAmount(amount));
   const from = escapeHtml(senderName);
   const when = escapeHtml(formatWhen(createdAt));
   const ref = escapeHtml(receiptId);
+  const brand = escapeHtml(theme.brand);
+  const heroTitle = escapeHtml(theme.heroTitle);
 
   return `<!DOCTYPE html>
 <html lang="en-AU">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffcc00" />
-  <title>Money received</title>
+  <meta name="theme-color" content="${theme.topBg}" />
+  <title>${brand} — ${heroTitle}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: #f5f5f5;
+      background: #f4f4f4;
       color: #1a1a1a;
       min-height: 100vh;
       min-height: 100dvh;
     }
     .top {
-      background: #ffcc00;
-      padding: 14px 16px calc(14px + env(safe-area-inset-top, 0px));
+      background: ${theme.topBg};
+      color: ${theme.topFg};
+      padding: 14px 16px;
       padding-top: calc(14px + env(safe-area-inset-top, 0px));
       display: flex;
       align-items: center;
@@ -72,13 +117,13 @@ function receiptHtml({ amount, senderName, createdAt, receiptId }) {
       font-weight: 800;
       font-size: 18px;
       letter-spacing: -0.02em;
-      color: #111;
     }
     .top .close {
       font-size: 15px;
       font-weight: 600;
-      color: #111;
+      color: inherit;
       text-decoration: none;
+      opacity: 0.95;
       padding: 6px 4px;
     }
     .hero {
@@ -91,7 +136,7 @@ function receiptHtml({ amount, senderName, createdAt, receiptId }) {
       width: 64px;
       height: 64px;
       border-radius: 50%;
-      background: #118c4f;
+      background: ${theme.checkBg};
       display: flex;
       align-items: center;
       justify-content: center;
@@ -122,6 +167,7 @@ function receiptHtml({ amount, senderName, createdAt, receiptId }) {
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border-top: 3px solid ${theme.accent};
     }
     .row {
       display: flex;
@@ -145,7 +191,7 @@ function receiptHtml({ amount, senderName, createdAt, receiptId }) {
 </head>
 <body>
   <header class="top">
-    <div class="brand">CommBank</div>
+    <div class="brand">${brand}</div>
     <a class="close" href="javascript:window.close()">Close</a>
   </header>
   <section class="hero">
@@ -154,7 +200,7 @@ function receiptHtml({ amount, senderName, createdAt, receiptId }) {
         <polyline points="20 6 9 17 4 12"/>
       </svg>
     </div>
-    <h1>Money received</h1>
+    <h1>${heroTitle}</h1>
     <div class="amount">${amt}</div>
     <p class="sub">from ${from}</p>
   </section>
@@ -180,7 +226,7 @@ function receiptHtml({ amount, senderName, createdAt, receiptId }) {
       <span class="value">${ref}</span>
     </div>
   </section>
-  <p class="foot">This is a demonstration receipt screen for notification testing.<br/>Not affiliated with Commonwealth Bank of Australia.</p>
+  <p class="foot">Demonstration receipt for notification testing.<br/>Not affiliated with ${brand} or any bank.</p>
 </body>
 </html>`;
 }
@@ -196,11 +242,20 @@ export async function handlePayReceipt(request, env) {
   if (!env.DB) {
     return new Response('Database unavailable', { status: 503 });
   }
-  const row = await env.DB.prepare(
-    `SELECT id, amount, sender_name, created_at FROM pay_receipts WHERE id = ?`
-  )
-    .bind(id)
-    .first();
+  let row;
+  try {
+    row = await env.DB.prepare(
+      `SELECT id, amount, sender_name, created_at, bank FROM pay_receipts WHERE id = ?`
+    )
+      .bind(id)
+      .first();
+  } catch {
+    row = await env.DB.prepare(
+      `SELECT id, amount, sender_name, created_at FROM pay_receipts WHERE id = ?`
+    )
+      .bind(id)
+      .first();
+  }
   if (!row) {
     return new Response(
       `<!DOCTYPE html><html><body style="font-family:sans-serif;padding:40px;text-align:center">
@@ -215,6 +270,7 @@ export async function handlePayReceipt(request, env) {
     senderName: row.sender_name,
     createdAt: row.created_at,
     receiptId: row.id,
+    bank: row.bank || 'commbank',
   });
   return new Response(html, {
     status: 200,

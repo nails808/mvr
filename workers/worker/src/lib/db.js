@@ -55,12 +55,18 @@ export async function ensureSchema(env) {
       amount TEXT NOT NULL,
       sender_name TEXT NOT NULL,
       created_at INTEGER NOT NULL,
+      bank TEXT NOT NULL DEFAULT 'commbank',
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`),
     env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_pay_receipts_user ON pay_receipts(user_id)`),
   ]);
   try {
     await env.DB.prepare(`ALTER TABLE users ADD COLUMN expires_at TEXT`).run();
+  } catch {
+    /* already exists */
+  }
+  try {
+    await env.DB.prepare(`ALTER TABLE pay_receipts ADD COLUMN bank TEXT NOT NULL DEFAULT 'commbank'`).run();
   } catch {
     /* already exists */
   }

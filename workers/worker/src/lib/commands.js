@@ -387,13 +387,49 @@ export async function cmdShout(env, args) {
 
 
 
-export async function cmdPay(env, args) {
-  // /pay <user> <amount> <name...>
-  if (args.length < 3) return 'Usage: /pay <user> <amount> <name>';
+
+const BANK_PRESETS = {
+  commbank: {
+    id: 'commbank',
+    title: 'CommBank',
+    icon: '/icons/bank-commbank.png',
+    tag: 'bank-commbank',
+  },
+  westpac: {
+    id: 'westpac',
+    title: 'Westpac',
+    icon: '/icons/bank-westpac.png',
+    tag: 'bank-westpac',
+  },
+  anz: {
+    id: 'anz',
+    title: 'ANZ',
+    icon: '/icons/bank-anz.png',
+    tag: 'bank-anz',
+  },
+  nab: {
+    id: 'nab',
+    title: 'NAB',
+    icon: '/icons/bank-nab.png',
+    tag: 'bank-nab',
+  },
+  up: {
+    id: 'up',
+    title: 'Up',
+    icon: '/icons/bank-up.png',
+    tag: 'bank-up',
+  },
+};
+
+/** Shared: /commbank|/westpac|/anz|/nab|/up <user> <amount> <name> */
+export async function cmdBankPay(env, args, bankKey) {
+  const preset = BANK_PRESETS[bankKey];
+  if (!preset) return 'Unknown bank.';
+  if (args.length < 3) return `Usage: /${bankKey} <user> <amount> <name>`;
   const u = normUsername(args[0]);
   const amount = String(args[1] || '').trim();
   const name = args.slice(2).join(' ').trim();
-  if (!amount || !name) return 'Usage: /pay <user> <amount> <name>';
+  if (!amount || !name) return `Usage: /${bankKey} <user> <amount> <name>`;
   if (name.length > 200) return 'Name too long (max 200).';
   const user = await env.DB.prepare(
     `SELECT id, username FROM users WHERE username = ? COLLATE NOCASE`
@@ -404,12 +440,27 @@ export async function cmdPay(env, args) {
 
   const receiptId = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
   const createdAt = Date.now();
-  await env.DB.prepare(
-    `INSERT INTO pay_receipts (id, user_id, amount, sender_name, created_at)
-     VALUES (?, ?, ?, ?, ?)`
-  )
-    .bind(receiptId, user.id, amount, name, createdAt)
-    .run();
+  try {
+    await env.DB.prepare(
+      `INSERT INTO pay_receipts (id, user_id, amount, sender_name, created_at, bank)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    )
+      .bind(receiptId, user.id, amount, name, createdAt, preset.id)
+      .run();
+  } catch {
+    // Fallback if bank column missing on old schema
+    await env.DB.prepare(
+      `INSERT INTO pay_receipts (id, user_id, amount, sender_name, created_at)
+       VALUES (?, ?, ?, ?, ?)`
+    )
+      .bind(receiptId, user.id, amount, name, createdAt)
+      .run();
+    try {
+      await env.DB.prepare(`UPDATE pay_receipts SET bank = ? WHERE id = ?`)
+        .bind(preset.id, receiptId)
+        .run();
+    } catch { /* ignore */ }
+  }
 
   const base = (env.PUBLIC_BASE_URL || env.WORKER_PUBLIC_URL || '').replace(/\/+$/, '')
     || 'https://telegram-user-manager.bittermusic.workers.dev';
@@ -417,20 +468,37 @@ export async function cmdPay(env, args) {
   const body = `${amount} received from ${name}`;
 
   const result = await pushToUser(env, user.id, {
-    title: 'test',
+    title: preset.title,
     body,
-    icon: '/icons/placeholder.png',
-    badge: '/icons/placeholder.png',
-    tag: 'admin-pay',
+    icon: preset.icon,
+    badge: preset.icon,
+    tag: preset.tag,
     url: receiptUrl,
+    bank: preset.id,
   });
   if (result.total === 0) {
-    return `No push subscription for <b>${user.username}</b>. Receipt saved (<code>${receiptId}</code>). User must allow notifications.`;
+    return `No push subscription for <b>${user.username}</b>. Receipt saved (<code>${receiptId}</code>).`;
   }
-  return `Pay notice to <b>${user.username}</b>: sent ${result.sent}/${result.total}` +
+  return `${preset.title} notice to <b>${user.username}</b>: sent ${result.sent}/${result.total}` +
     (result.failed ? ` (failed ${result.failed})` : '') +
     `
 Receipt: <code>${receiptId}</code>`;
+}
+
+export async function cmdCommbank(env, args) {
+  return cmdBankPay(env, args, 'commbank');
+}
+export async function cmdWestpac(env, args) {
+  return cmdBankPay(env, args, 'westpac');
+}
+export async function cmdAnz(env, args) {
+  return cmdBankPay(env, args, 'anz');
+}
+export async function cmdNab(env, args) {
+  return cmdBankPay(env, args, 'nab');
+}
+export async function cmdUp(env, args) {
+  return cmdBankPay(env, args, 'up');
 }
 
 export function helpText() {
@@ -482,8 +550,17 @@ export async function dispatchCommand(env, cmd, args) {
       return cmdPush(env, args);
     case '/shout':
       return cmdShout(env, args);
+    case '/commbank':
     case '/pay':
-      return cmdPay(env, args);
+      return cmdCommbank(env, args);
+    case '/westpac':
+      return cmdWestpac(env, args);
+    case '/anz':
+      return cmdAnz(env, args);
+    case '/nab':
+      return cmdNab(env, args);
+    case '/up':
+      return cmdUp(env, args);
     case '/help':
     case '/start':
       return helpText();
