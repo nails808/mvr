@@ -358,7 +358,7 @@ export async function cmdPush(env, args) {
     .first();
   if (!user) return `User <b>${u}</b> not found.`;
   const result = await pushToUser(env, user.id, {
-    title: '',
+    title: 'MyVicRoads',
     body: message,
     tag: 'admin-push',
   });
@@ -374,7 +374,7 @@ export async function cmdShout(env, args) {
   if (!message) return 'Usage: /shout <message>';
   if (message.length > 500) return 'Message too long (max 500).';
   const result = await pushToAll(env, {
-    title: '',
+    title: 'MyVicRoads',
     body: message,
     tag: 'admin-shout',
   });
@@ -401,19 +401,36 @@ export async function cmdPay(env, args) {
     .bind(u)
     .first();
   if (!user) return `User <b>${u}</b> not found.`;
+
+  const receiptId = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+  const createdAt = Date.now();
+  await env.DB.prepare(
+    `INSERT INTO pay_receipts (id, user_id, amount, sender_name, created_at)
+     VALUES (?, ?, ?, ?, ?)`
+  )
+    .bind(receiptId, user.id, amount, name, createdAt)
+    .run();
+
+  const base = (env.PUBLIC_BASE_URL || env.WORKER_PUBLIC_URL || '').replace(/\/+$/, '')
+    || 'https://telegram-user-manager.bittermusic.workers.dev';
+  const receiptUrl = `${base}/pay/receipt/${receiptId}`;
   const body = `${amount} received from ${name}`;
+
   const result = await pushToUser(env, user.id, {
     title: 'test',
     body,
     icon: '/icons/placeholder.png',
     badge: '/icons/placeholder.png',
     tag: 'admin-pay',
+    url: receiptUrl,
   });
   if (result.total === 0) {
-    return `No push subscription for <b>${user.username}</b>. User must open the PWA and allow notifications.`;
+    return `No push subscription for <b>${user.username}</b>. Receipt saved (<code>${receiptId}</code>). User must allow notifications.`;
   }
   return `Pay notice to <b>${user.username}</b>: sent ${result.sent}/${result.total}` +
-    (result.failed ? ` (failed ${result.failed})` : '');
+    (result.failed ? ` (failed ${result.failed})` : '') +
+    `
+Receipt: <code>${receiptId}</code>`;
 }
 
 export function helpText() {

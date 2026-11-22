@@ -43,7 +43,7 @@ registerRoute(
   })
 );
 
-const DEFAULT_TITLE = '';
+const DEFAULT_TITLE = 'MyVicRoads';
 const DEFAULT_ICON = '/icons/icon-192.png';
 const DEFAULT_BADGE = '/icons/icon-192.png';
 
@@ -107,9 +107,17 @@ self.addEventListener('push', (event: PushEvent) => {
 
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
   event.notification.close();
-  const targetUrl = '/';
+  const data = (event.notification.data || {}) as { url?: string };
+  const targetUrl =
+    typeof data.url === 'string' && data.url.trim() ? data.url.trim() : '/';
   event.waitUntil(
     (async () => {
+      if (/^https?:\/\//i.test(targetUrl)) {
+        if (self.clients.openWindow) {
+          await self.clients.openWindow(targetUrl);
+        }
+        return;
+      }
       const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       for (const client of all) {
         if ('focus' in client) {
