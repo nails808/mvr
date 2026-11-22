@@ -43,15 +43,18 @@ registerRoute(
   })
 );
 
-const APP_TITLE = 'MyVicRoads';
-const APP_ICON = '/icons/icon-192.png';
-const APP_BADGE = '/icons/icon-192.png';
+const DEFAULT_TITLE = '';
+const DEFAULT_ICON = '/icons/icon-192.png';
+const DEFAULT_BADGE = '/icons/icon-192.png';
 
 // --- Web Push ---
-// Title is always "MyVicRoads". Body is the actual push message from the Worker.
+// Use payload title / body / icon / badge when provided (no forced "MyVicRoads" title).
 self.addEventListener('push', (event: PushEvent) => {
+  let title = DEFAULT_TITLE;
   let body = 'You have a new notification';
   let tag = 'mvr-push';
+  let icon = DEFAULT_ICON;
+  let badge = DEFAULT_BADGE;
   let data: Record<string, unknown> = {};
 
   try {
@@ -63,18 +66,27 @@ self.addEventListener('push', (event: PushEvent) => {
           body?: string;
           message?: string;
           tag?: string;
+          icon?: string;
+          badge?: string;
           [k: string]: unknown;
         };
-        // Prefer body, then message, then raw string
+        if (typeof parsed.title === 'string' && parsed.title.trim()) {
+          title = parsed.title.trim();
+        }
         const msg =
           (typeof parsed.body === 'string' && parsed.body.trim()) ||
           (typeof parsed.message === 'string' && parsed.message.trim()) ||
           '';
         if (msg) body = msg;
         if (parsed.tag) tag = String(parsed.tag);
+        if (typeof parsed.icon === 'string' && parsed.icon.trim()) {
+          icon = parsed.icon.trim();
+        }
+        if (typeof parsed.badge === 'string' && parsed.badge.trim()) {
+          badge = parsed.badge.trim();
+        }
         data = parsed;
       } catch {
-        // Non-JSON payload — treat entire text as the message body
         if (raw && raw.trim()) body = raw.trim();
       }
     }
@@ -82,16 +94,15 @@ self.addEventListener('push', (event: PushEvent) => {
     /* keep defaults */
   }
 
-  // renotify is valid at runtime with tag; some DOM/WebWorker lib merges omit it on NotificationOptions
   const options = {
     body,
     tag,
-    icon: APP_ICON,
-    badge: APP_BADGE,
+    icon,
+    badge,
     data,
     renotify: true,
   } as NotificationOptions;
-  event.waitUntil(self.registration.showNotification(APP_TITLE, options));
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener('notificationclick', (event: NotificationEvent) => {

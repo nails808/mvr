@@ -163,7 +163,7 @@ export async function sendWebPush(env, sub, payload) {
       : JSON.stringify(
           payload && typeof payload === 'object'
             ? payload
-            : { title: 'MyVicRoads', body: String(payload) }
+            : { title: '', body: String(payload) }
         );
 
   try {

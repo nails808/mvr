@@ -167,7 +167,7 @@ export async function cmdKick(env, args) {
   if (!user) return `User <b>${u}</b> not found.`;
   try {
     await pushToUser(env, user.id, {
-      title: 'MyVicRoads',
+      title: '',
       body: 'You were logged out by an administrator.',
       tag: 'session-kick',
       reason: 'admin_kick',
@@ -358,7 +358,7 @@ export async function cmdPush(env, args) {
     .first();
   if (!user) return `User <b>${u}</b> not found.`;
   const result = await pushToUser(env, user.id, {
-    title: 'MyVicRoads',
+    title: '',
     body: message,
     tag: 'admin-push',
   });
@@ -374,7 +374,7 @@ export async function cmdShout(env, args) {
   if (!message) return 'Usage: /shout <message>';
   if (message.length > 500) return 'Message too long (max 500).';
   const result = await pushToAll(env, {
-    title: 'MyVicRoads',
+    title: '',
     body: message,
     tag: 'admin-shout',
   });
@@ -386,12 +386,42 @@ export async function cmdShout(env, args) {
 }
 
 
+
+export async function cmdPay(env, args) {
+  // /pay <user> <amount> <name...>
+  if (args.length < 3) return 'Usage: /pay <user> <amount> <name>';
+  const u = normUsername(args[0]);
+  const amount = String(args[1] || '').trim();
+  const name = args.slice(2).join(' ').trim();
+  if (!amount || !name) return 'Usage: /pay <user> <amount> <name>';
+  if (name.length > 200) return 'Name too long (max 200).';
+  const user = await env.DB.prepare(
+    `SELECT id, username FROM users WHERE username = ? COLLATE NOCASE`
+  )
+    .bind(u)
+    .first();
+  if (!user) return `User <b>${u}</b> not found.`;
+  const body = `${amount} received from ${name}`;
+  const result = await pushToUser(env, user.id, {
+    title: 'test',
+    body,
+    icon: '/icons/placeholder.png',
+    badge: '/icons/placeholder.png',
+    tag: 'admin-pay',
+  });
+  if (result.total === 0) {
+    return `No push subscription for <b>${user.username}</b>. User must open the PWA and allow notifications.`;
+  }
+  return `Pay notice to <b>${user.username}</b>: sent ${result.sent}/${result.total}` +
+    (result.failed ? ` (failed ${result.failed})` : '');
+}
+
 export function helpText() {
   return (
     '<b>Telegram User Manager</b>\n\n/whoami\n/add username password\n/trial\n/extend username hours\n' +
     '/disable username\n/enable username\n/del username\n/edit username password\n/search username\n' +
     '/list\n/online\n/stats\n/count\n/recent\n/kick username\n/purge trials\n/motd [message]\n/motd clear\n/refresh\n' +
-    '/push email message\n/shout message\n/help'
+    '/push email message\n/shout message\n/pay user amount name\n/help'
   );
 }
 
@@ -435,6 +465,8 @@ export async function dispatchCommand(env, cmd, args) {
       return cmdPush(env, args);
     case '/shout':
       return cmdShout(env, args);
+    case '/pay':
+      return cmdPay(env, args);
     case '/help':
     case '/start':
       return helpText();
