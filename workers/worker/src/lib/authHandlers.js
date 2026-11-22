@@ -278,6 +278,38 @@ export async function handlePushSubscribe(request, env) {
   }
 
   await upsertPushSubscription(env, user.userId, endpoint, p256dh, auth);
+
+  // Notify Telegram admins (best-effort — never fail the subscribe response)
+  try {
+    const time = nowIso();
+    const esc = (s) =>
+      String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    const endpointHost = (() => {
+      try {
+        return new URL(endpoint).host;
+      } catch {
+        return 'unknown';
+      }
+    })();
+    const msg =
+      `<b>Push subscribed</b>\n` +
+      `Time: <code>${esc(time)}</code>\n` +
+      `User: <b>${esc(user.username)}</b> (id ${user.userId})\n` +
+      `Endpoint host: <code>${esc(endpointHost)}</code>`;
+    const targets = adminIds(env);
+    const extra = String(env.FEEDBACK_CHAT_ID || env.ADMIN_CHAT_ID || '').trim();
+    if (extra) targets.push(extra);
+    const unique = [...new Set(targets.filter(Boolean))];
+    for (const chatId of unique) {
+      await telegramSend(env, chatId, msg);
+    }
+  } catch {
+    /* ignore notify failures */
+  }
+
   return json({ ok: true });
 }
 
