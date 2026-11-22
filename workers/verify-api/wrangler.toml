@@ -1,0 +1,25 @@
+name = "mvr-verify-api"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# Static verify.html (and future assets)
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+# D1 — create with: wrangler d1 create mvr-verify
+# then paste database_id below
+[[d1_databases]]
+binding = "DB"
+database_name = "mvr-verify"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+# R2 — create with: wrangler r2 bucket create mvr-verify-photos
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "mvr-verify-photos"
+
+# Cron: purge expired sessions hourly
+[triggers]
+crons = ["0 * * * *"]

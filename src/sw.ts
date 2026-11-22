@@ -23,7 +23,9 @@ registerRoute(
 );
 
 registerRoute(
-  ({ url }) => /^https:\/\/mvr-verify/i.test(url.href),
+  ({ url }) =>
+    /mvr-verify/i.test(url.hostname) ||
+    /\/sessions\//i.test(url.pathname),
   new NetworkFirst({
     cacheName: 'verification-api',
     networkTimeoutSeconds: 8,

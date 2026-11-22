@@ -226,15 +226,20 @@ export async function createSession(
       scannedAt: null,
     };
 
-    const url = `${VerificationConfig.dbBaseUrl}/sessions/${sessionId}.json`;
+    const base = VerificationConfig.apiBaseUrl.replace(/\/+$/, '');
+    const url = `${base}/sessions/${sessionId}`;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (VerificationConfig.writeKey) {
+      headers['X-Verify-Write-Key'] = VerificationConfig.writeKey;
+    }
     const res = await fetch(url, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(session),
     });
 
     if (!res.ok) {
-      throw new Error(`Firebase error ${res.status}`);
+      throw new Error(`Verify API error ${res.status}`);
     }
 
     const verifyUrl = `${VerificationConfig.verifyPage}?id=${sessionId}`;
@@ -259,7 +264,8 @@ export async function createSession(
  */
 export async function isScanned(sessionId: string): Promise<boolean> {
   try {
-    const url = `${VerificationConfig.dbBaseUrl}/sessions/${sessionId}/scannedAt.json`;
+    const base = VerificationConfig.apiBaseUrl.replace(/\/+$/, '');
+    const url = `${base}/sessions/${sessionId}/scannedAt`;
     const res = await fetch(url, { method: 'GET' });
     if (!res.ok) return false;
     const body = (await res.text()).trim();

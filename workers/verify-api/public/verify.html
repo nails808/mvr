@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Licence Verification – VicRoads</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f2f4f6;
+      color: #1a2a3a;
+      min-height: 100vh;
+    }
+
+    /* ── top bar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 16px;
+      background: #fff;
+      border-bottom: 1px solid #e0e4e8;
+      position: relative;
+    }
+    .topbar h1 { font-size: 17px; font-weight: 600; }
+    .topbar .close-btn {
+      position: absolute; right: 16px;
+      font-size: 16px; color: #2e7d32; cursor: pointer; font-weight: 500;
+    }
+
+    /* ── states ── */
+    .state { display: none; }
+    .state.active { display: block; }
+
+    /* loading */
+    #loading { text-align: center; padding: 80px 24px; }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 4px solid #e0e4e8;
+      border-top-color: #2e7d32;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* error */
+    #error { text-align: center; padding: 80px 24px; }
+    .error-icon { font-size: 56px; margin-bottom: 12px; }
+    #error h2 { font-size: 22px; margin-bottom: 8px; color: #d32f2f; }
+    #error p  { font-size: 15px; color: #6b7c8d; line-height: 1.5; }
+
+    /* ── verified card ── */
+    #verified { padding-bottom: 48px; }
+
+    .verified-header {
+      text-align: center;
+      padding: 28px 16px 20px;
+      background: #fff;
+    }
+    .check-circle {
+      width: 72px; height: 72px;
+      background: #2e7d32;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+    }
+    .check-circle svg { width: 38px; height: 38px; }
+    .verified-title { font-size: 22px; font-weight: 700; color: #1a2a3a; }
+
+    /* licence card header banner */
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #0d2d6b;
+      padding: 14px 16px;
+    }
+    .card-header-left h2 {
+      font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 0.5px;
+    }
+    .card-header-left p { font-size: 12px; color: #b0c4de; margin-top: 2px; }
+
+    /* VicRoads logo (SVG inline) */
+    .vr-logo { display: flex; align-items: center; gap: 4px; }
+    .vr-logo svg { width: 28px; height: 28px; }
+    .vr-logo span { font-size: 14px; font-weight: 600; color: #fff; letter-spacing: -0.3px; }
+
+    /* photo section */
+    .photo-section {
+      background: #b5d9bb;
+      padding: 20px 16px;
+      display: flex; justify-content: center;
+      position: relative; overflow: hidden;
+      min-height: 220px;
+    }
+    .photo-section img.licence-photo {
+      width: 160px; height: 200px;
+      object-fit: cover;
+      border-radius: 4px;
+      position: relative; z-index: 2;
+    }
+    .photo-placeholder {
+      width: 160px; height: 200px;
+      background: #8ab8a0;
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 2; position: relative;
+    }
+    .photo-placeholder svg { width: 80px; height: 80px; opacity: 0.4; }
+
+    /* hologram overlay pattern */
+    .hologram-overlay {
+      position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0.18;
+      background-image:
+        repeating-linear-gradient(
+          45deg,
+          transparent 0px, transparent 6px,
+          rgba(255,255,255,0.9) 6px, rgba(255,255,255,0.9) 7px
+        ),
+        repeating-linear-gradient(
+          -45deg,
+          transparent 0px, transparent 6px,
+          rgba(255,255,255,0.7) 6px, rgba(255,255,255,0.7) 7px
+        );
+    }
+
+    /* details */
+    .details { background: #fff; padding: 0 16px; }
+    .name-row {
+      padding: 18px 0 14px;
+      border-bottom: 1px solid #e8eaed;
+    }
+    .name-row h2 { font-size: 20px; font-weight: 700; color: #1a2a3a; }
+
+    .detail-row {
+      padding: 14px 0;
+      border-bottom: 1px solid #e8eaed;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { font-size: 13px; color: #6b7c8d; margin-bottom: 4px; }
+    .detail-value { font-size: 15px; font-weight: 600; color: #1a2a3a; white-space: pre-line; line-height: 1.5; }
+
+    /* section header */
+    .section-header {
+      background: #f0f2f4;
+      padding: 12px 16px;
+      font-size: 15px; font-weight: 600; color: #1a2a3a;
+      margin-top: 8px;
+    }
+
+    /* status row */
+    .status-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 14px 16px;
+      background: #fff;
+      border-bottom: 1px solid #e8eaed;
+    }
+    .status-circle {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #2e7d32;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .status-circle svg { width: 16px; height: 16px; }
+
+    /* footer */
+    .footer {
+      text-align: center;
+      margin: 16px;
+      padding: 20px 16px;
+      background: #f0f2f4;
+      border-radius: 12px;
+    }
+    .footer p { font-size: 13px; color: #6b7c8d; margin-bottom: 8px; }
+    .footer .vr-footer { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 6px; }
+    .footer .vr-footer span { font-size: 17px; font-weight: 700; color: #1a2a3a; }
+    .footer .timestamp { font-size: 13px; color: #6b7c8d; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Verification of Licence</h1>
+  <span class="close-btn" onclick="window.close()">Close</span>
+</div>
+
+<!-- Loading -->
+<div id="loading" class="state active">
+  <div class="spinner"></div>
+  <p style="color:#6b7c8d;font-size:15px">Verifying licence…</p>
+</div>
+
+<!-- Error -->
+<div id="error" class="state">
+  <div class="error-icon">⚠️</div>
+  <h2 id="error-title">Verification Failed</h2>
+  <p  id="error-msg">This QR code is invalid or has expired. Please ask the licence holder to generate a new one.</p>
+</div>
+
+<!-- Verified -->
+<div id="verified" class="state">
+
+  <div class="verified-header">
+    <div class="check-circle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <div class="verified-title">Licence Verified</div>
+  </div>
+
+  <div class="card-header">
+    <div class="card-header-left">
+      <h2>DRIVER LICENCE</h2>
+      <p>Victoria Australia</p>
+    </div>
+    <div class="vr-logo">
+      <!-- VicRoads V logo simplified SVG -->
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 8 L14 32 L20 18 L26 32 L34 8 L28 8 L20 26 L12 8 Z" fill="white"/>
+        <path d="M28 8 L34 8 L34 14 L28 8 Z" fill="#aaa"/>
+      </svg>
+      <span>vicroads</span>
+    </div>
+  </div>
+
+  <div class="photo-section">
+    <div class="hologram-overlay"></div>
+    <img id="licence-photo" class="licence-photo" style="display:none" alt="Licence photo" />
+    <div id="photo-placeholder" class="photo-placeholder">
+      <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+    </div>
+  </div>
+
+  <div class="details">
+    <div class="name-row"><h2 id="full-name"></h2></div>
+    <div class="detail-row">
+      <div class="detail-label">Address</div>
+      <div class="detail-value" id="address"></div>
+    </div>
+  </div>
+
+  <div class="section-header">Car licence details</div>
+
+  <div class="status-row">
+    <div class="status-circle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <div>
+      <div style="font-size:13px;color:#6b7c8d">Licence status</div>
+      <div style="font-size:15px;font-weight:700" id="licence-status"></div>
+    </div>
+  </div>
+
+  <div class="details">
+    <div class="detail-row">
+      <div class="detail-label">Proficiency</div>
+      <div class="detail-value" id="proficiency"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Details verified with</p>
+    <div class="vr-footer">
+      <svg viewBox="0 0 40 20" width="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 2 L7 18 L10 9 L13 18 L18 2 L14 2 L10 14 L6 2 Z" fill="#2e7d32"/>
+      </svg>
+      <span>vicroads</span>
+    </div>
+    <div class="timestamp" id="timestamp"></div>
+  </div>
+</div>
+
+<script>
+  // Same-origin Cloudflare Worker API (or set window.__VERIFY_API_BASE__)
+  const DB_BASE = (typeof window !== 'undefined' && window.__VERIFY_API_BASE__)
+    ? String(window.__VERIFY_API_BASE__).replace(/\/+$/, '')
+    : '';
+
+  function show(id) {
+    document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function showError(title, msg) {
+    document.getElementById('error-title').textContent = title;
+    document.getElementById('error-msg').textContent   = msg;
+    show('error');
+  }
+
+  function formatDate(ts) {
+    return new Date(ts).toLocaleString('en-AU', {
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true
+    });
+  }
+
+  async function markScanned(sessionId) {
+    try {
+      await fetch(`${DB_BASE}/sessions/${sessionId}/scannedAt.json`, {
+        method: 'PUT',
+        body: Date.now().toString()
+      });
+    } catch (_) { /* silent – doesn't affect UX */ }
+  }
+
+  async function loadFromFirebase(sessionId) {
+    const resp = await fetch(`${DB_BASE}/sessions/${sessionId}.json`);
+    if (!resp.ok) throw new Error('Network error');
+    const session = await resp.json();
+    if (!session)              throw new Error('not_found');
+    if (Date.now() > session.expiresAt) throw new Error('expired');
+    return session;
+  }
+
+  function loadFromBase64(data) {
+    const json = JSON.parse(atob(data.replace(/-/g, '+').replace(/_/g, '/')));
+    const now  = Date.now();
+    if (json.ts && now - json.ts > 2 * 60 * 1000) throw new Error('expired');
+    return {
+      name:          json.n,
+      address:       json.a,
+      licenceNumber: json.l,
+      licenceStatus: json.s,
+      proficiency:   json.p,
+      licenceExpiry: json.e,
+      dob:           json.d,
+      licenceType:   json.t,
+      createdAt:     json.ts,
+      expiresAt:     json.ts + 2 * 60 * 1000,
+      photoBase64:   null
+    };
+  }
+
+  function renderSession(session, sessionId) {
+    // Photo
+    if (session.photoBase64) {
+      const img = document.getElementById('licence-photo');
+      img.src = 'data:image/jpeg;base64,' + session.photoBase64;
+      img.style.display = 'block';
+      document.getElementById('photo-placeholder').style.display = 'none';
+    }
+
+    document.getElementById('full-name').textContent      = session.name          || '';
+    document.getElementById('address').textContent        = session.address        || '';
+    document.getElementById('licence-status').textContent = session.licenceStatus  || '';
+    document.getElementById('proficiency').textContent    = session.proficiency    || '';
+    document.getElementById('timestamp').textContent      = formatDate(Date.now());
+
+    show('verified');
+
+    // Notify the app that the QR was scanned
+    if (sessionId) markScanned(sessionId);
+  }
+
+  async function init() {
+    const params    = new URLSearchParams(window.location.search);
+    const sessionId = params.get('id');
+    const rawData   = params.get('data');
+
+    try {
+      if (sessionId) {
+        const session = await loadFromFirebase(sessionId);
+        renderSession(session, sessionId);
+      } else if (rawData) {
+        const session = loadFromBase64(rawData);
+        renderSession(session, null);
+      } else {
+        showError('Invalid QR Code', 'No verification data found. Please scan a valid VicRoads licence QR code.');
+      }
+    } catch (err) {
+      if (err.message === 'expired') {
+        showError('QR Code Expired', 'This QR code has expired. Please ask the licence holder to generate a new one.');
+      } else if (err.message === 'not_found') {
+        showError('Not Found', 'Verification session not found. The QR code may have already been used or has expired.');
+      } else {
+        showError('Verification Failed', 'Unable to verify this licence. Please try again or contact VicRoads.');
+      }
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
