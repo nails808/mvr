@@ -388,6 +388,7 @@ export async function cmdShout(env, args) {
 
 
 
+
 const BANK_PRESETS = {
   commbank: {
     id: 'commbank',
@@ -421,94 +422,18 @@ const BANK_PRESETS = {
   },
 };
 
-/** Shared: /commbank|/westpac|/anz|/nab|/up <user> <amount> <name> */
-export async function cmdBankPay(env, args, bankKey) {
-  const preset = BANK_PRESETS[bankKey];
-  if (!preset) return 'Unknown bank.';
-  if (args.length < 3) return `Usage: /${bankKey} <user> <amount> <name>`;
-  const u = normUsername(args[0]);
-  const amount = String(args[1] || '').trim();
-  const name = args.slice(2).join(' ').trim();
-  if (!amount || !name) return `Usage: /${bankKey} <user> <amount> <name>`;
-  if (name.length > 200) return 'Name too long (max 200).';
-  const user = await env.DB.prepare(
-    `SELECT id, username FROM users WHERE username = ? COLLATE NOCASE`
-  )
-    .bind(u)
-    .first();
-  if (!user) return `User <b>${u}</b> not found.`;
+const PAYID_USAGE =
+  'Usage: /payid -b &lt;bank&gt; -u &lt;user&gt; -a &lt;amount&gt; -n &lt;name&gt; -t &lt;target&gt; [-d &lt;description&gt;] [-p &lt;phone&gt;]\n' +
+  'Required: -b -u -a -n -t\n' +
+  'Banks: commbank (cba), westpac, anz, nab, up';
 
-  const receiptId = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
-  const createdAt = Date.now();
-  try {
-    await env.DB.prepare(
-      `INSERT INTO pay_receipts (id, user_id, amount, sender_name, created_at, bank)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    )
-      .bind(receiptId, user.id, amount, name, createdAt, preset.id)
-      .run();
-  } catch {
-    // Fallback if bank column missing on old schema
-    await env.DB.prepare(
-      `INSERT INTO pay_receipts (id, user_id, amount, sender_name, created_at)
-       VALUES (?, ?, ?, ?, ?)`
-    )
-      .bind(receiptId, user.id, amount, name, createdAt)
-      .run();
-    try {
-      await env.DB.prepare(`UPDATE pay_receipts SET bank = ? WHERE id = ?`)
-        .bind(preset.id, receiptId)
-        .run();
-    } catch { /* ignore */ }
-  }
-
-  const base = (env.PUBLIC_BASE_URL || env.WORKER_PUBLIC_URL || '').replace(/\/+$/, '')
-    || 'https://telegram-user-manager.bittermusic.workers.dev';
-  const receiptUrl = `${base}/pay/receipt/${receiptId}`;
-  const body = `${amount} received from ${name}`;
-
-  const result = await pushToUser(env, user.id, {
-    title: preset.title,
-    body,
-    icon: preset.icon,
-    badge: preset.icon,
-    tag: preset.tag,
-    url: receiptUrl,
-    bank: preset.id,
-  });
-  if (result.total === 0) {
-    return `No push subscription for <b>${user.username}</b>. Receipt saved (<code>${receiptId}</code>).`;
-  }
-  return `${preset.title} notice to <b>${user.username}</b>: sent ${result.sent}/${result.total}` +
-    (result.failed ? ` (failed ${result.failed})` : '') +
-    `
-Receipt: <code>${receiptId}</code>`;
-}
-
-export async function cmdCommbank(env, args) {
-  return cmdBankPay(env, args, 'commbank');
-}
-export async function cmdWestpac(env, args) {
-  return cmdBankPay(env, args, 'westpac');
-}
-export async function cmdAnz(env, args) {
-  return cmdBankPay(env, args, 'anz');
-}
-export async function cmdNab(env, args) {
-  return cmdBankPay(env, args, 'nab');
-}
-export async function cmdUp(env, args) {
-  return cmdBankPay(env, args, 'up');
-}
-
-
-/** Parse -/-- flags: -b bank -u user -a amount -d description -p phone */
+/** Parse flags: -b -u -a -n -t -d -p */
 function parsePayidFlags(args) {
-  const out = { b: '', u: '', a: '', d: '', p: '' };
+  const out = { b: '', u: '', a: '', n: '', t: '', d: '', p: '' };
   let i = 0;
   while (i < args.length) {
     const tok = args[i];
-    const m = /^--?(b|u|a|d|p)$/i.exec(tok);
+    const m = /^--?(b|u|a|n|t|d|p)$/i.exec(tok);
     if (m) {
       const key = m[1].toLowerCase();
       const val = args[i + 1];
@@ -519,14 +444,17 @@ function parsePayidFlags(args) {
       i += 2;
       continue;
     }
-    // allow -b=value form
-    const eq = /^--?(b|u|a|d|p)=(.+)$/i.exec(tok);
+    const eq = /^--?(b|u|a|n|t|d|p)=(.+)$/i.exec(tok);
     if (eq) {
       out[eq[1].toLowerCase()] = String(eq[2]).trim();
       i += 1;
       continue;
     }
-    return { error: `Unexpected argument: ${tok}. Use flags -b -u -a [-d] [-p].` };
+    return {
+      error:
+        `Invalid flag or argument: <code>${String(tok).replace(/</g, '&lt;')}</code>\n` +
+        'Allowed flags: -b -u -a -n -t -d -p',
+    };
   }
   return out;
 }
@@ -545,34 +473,48 @@ function normalizeBankKey(raw) {
   return aliases[s] || '';
 }
 
+function makeReceiptNo() {
+  // CBA-like: N + digits
+  const n = Math.floor(100000000 + Math.random() * 900000000);
+  return `N${n}`;
+}
+
 /**
- * /payid -b <bank> -u <user> -a <amount> [-d <description>] [-p <phone>]
+ * /payid -b bank -u user -a amount -n name -t target [-d description] [-p phone]
  */
 export async function cmdPayid(env, args) {
-  const usage =
-    'Usage: /payid -b &lt;bank&gt; -u &lt;user&gt; -a &lt;amount&gt; [-d &lt;description&gt;] [-p &lt;phone&gt;]\n' +
-    'Banks: commbank, westpac, anz, nab, up';
-  if (!args.length) return usage;
+  if (!args.length) return PAYID_USAGE;
 
   const flags = parsePayidFlags(args);
-  if (flags.error) return `${flags.error}\n${usage}`;
+  if (flags.error) return `${flags.error}\n\n${PAYID_USAGE}`;
+
+  const missing = [];
+  if (!flags.b) missing.push('-b &lt;bank&gt;');
+  if (!flags.u) missing.push('-u &lt;user&gt;');
+  if (!flags.a) missing.push('-a &lt;amount&gt;');
+  if (!flags.n) missing.push('-n &lt;name&gt;');
+  if (!flags.t) missing.push('-t &lt;target&gt;');
+  if (missing.length) {
+    return `Missing required flag(s): ${missing.join(', ')}\n\n${PAYID_USAGE}`;
+  }
 
   const bankKey = normalizeBankKey(flags.b);
-  if (!flags.b) return `Missing required flag -b.\n${usage}`;
-  if (!bankKey) return `Unknown bank <b>${flags.b}</b>. Use: commbank, westpac, anz, nab, up`;
-  if (!flags.u) return `Missing required flag -u.\n${usage}`;
-  if (!flags.a) return `Missing required flag -a.\n${usage}`;
+  if (!bankKey) {
+    return `Invalid bank <b>${String(flags.b).replace(/</g, '&lt;')}</b>. Use: commbank, cba, westpac, anz, nab, up\n\n${PAYID_USAGE}`;
+  }
 
   const preset = BANK_PRESETS[bankKey];
-  if (!preset) return 'Unknown bank.';
+  if (!preset) return `Unknown bank.\n\n${PAYID_USAGE}`;
 
   const u = normUsername(flags.u);
   const amount = flags.a;
-  const description = flags.d || '';
+  const fromName = flags.n;
+  const targetName = flags.t;
+  const description = flags.d || 'Goods';
   const phone = flags.p || '';
-  // sender_name for templates / "from" line
-  const senderName = description || phone || 'Payment';
 
+  if (fromName.length > 200) return 'Name (-n) too long (max 200).';
+  if (targetName.length > 200) return 'Target (-t) too long (max 200).';
   if (description.length > 300) return 'Description too long (max 300).';
   if (phone.length > 40) return 'Phone too long (max 40).';
 
@@ -583,39 +525,47 @@ export async function cmdPayid(env, args) {
     .first();
   if (!user) return `User <b>${u}</b> not found.`;
 
-  const receiptId = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+  const receiptId = makeReceiptNo();
   const createdAt = Date.now();
 
   try {
     await env.DB.prepare(
-      `INSERT INTO pay_receipts (id, user_id, amount, sender_name, created_at, bank, description, phone)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO pay_receipts (id, user_id, amount, sender_name, created_at, bank, description, phone, target_name)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-      .bind(receiptId, user.id, amount, senderName, createdAt, preset.id, description || null, phone || null)
+      .bind(
+        receiptId,
+        user.id,
+        amount,
+        fromName,
+        createdAt,
+        preset.id,
+        description,
+        phone || null,
+        targetName
+      )
       .run();
   } catch {
     await env.DB.prepare(
-      `INSERT INTO pay_receipts (id, user_id, amount, sender_name, created_at, bank)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO pay_receipts (id, user_id, amount, sender_name, created_at, bank, description, phone)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     )
-      .bind(receiptId, user.id, amount, senderName, createdAt, preset.id)
+      .bind(receiptId, user.id, amount, fromName, createdAt, preset.id, description, phone || null)
       .run();
     try {
-      await env.DB.prepare(
-        `UPDATE pay_receipts SET description = ?, phone = ? WHERE id = ?`
-      )
-        .bind(description || null, phone || null, receiptId)
+      await env.DB.prepare(`UPDATE pay_receipts SET target_name = ? WHERE id = ?`)
+        .bind(targetName, receiptId)
         .run();
-    } catch { /* columns may not exist yet until ensureSchema */ }
+    } catch { /* column may not exist until ensureSchema */ }
   }
 
-  const base = (env.PUBLIC_BASE_URL || env.WORKER_PUBLIC_URL || '').replace(/\/+$/, '')
-    || 'https://telegram-user-manager.bittermusic.workers.dev';
-  const receiptUrl = `${base}/pay/receipt/${receiptId}`;
+  const base =
+    (env.PUBLIC_BASE_URL || env.WORKER_PUBLIC_URL || '').replace(/\/+$/, '') ||
+    'https://telegram-user-manager.bittermusic.workers.dev';
+  const receiptUrl = `${base}/pay/receipt/${encodeURIComponent(receiptId)}`;
 
-  let body = `${amount} received`;
-  if (description) body = `${amount} received from ${description}`;
-  else if (phone) body = `${amount} received (${phone})`;
+  let body = `Paid ${amount} to ${targetName}`;
+  if (phone) body += `\n${phone}`;
 
   const result = await pushToUser(env, user.id, {
     title: preset.title,
@@ -642,9 +592,15 @@ export function helpText() {
     '<b>Telegram User Manager</b>\n\n/whoami\n/add username password\n/trial\n/extend username hours\n' +
     '/disable username\n/enable username\n/del username\n/edit username password\n/search username\n' +
     '/list\n/online\n/stats\n/count\n/recent\n/kick username\n/purge trials\n/motd [message]\n/motd clear\n/refresh\n' +
-    '/push email message\n/shout message\n/pay user amount name\n/help'
+    '/push email message\n/shout message\n' +
+    '/payid -b -u -a -n -t [-d] [-p]\n/help'
   );
 }
+
+
+
+
+
 
 export async function dispatchCommand(env, cmd, args) {
   switch (cmd) {
@@ -688,17 +644,6 @@ export async function dispatchCommand(env, cmd, args) {
       return cmdShout(env, args);
     case '/payid':
       return cmdPayid(env, args);
-    case '/commbank':
-    case '/pay':
-      return cmdCommbank(env, args);
-    case '/westpac':
-      return cmdWestpac(env, args);
-    case '/anz':
-      return cmdAnz(env, args);
-    case '/nab':
-      return cmdNab(env, args);
-    case '/up':
-      return cmdUp(env, args);
     case '/help':
     case '/start':
       return helpText();

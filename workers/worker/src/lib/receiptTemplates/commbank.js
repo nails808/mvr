@@ -1,118 +1,233 @@
 /**
- * Receipt template: commbank
- *
- * Edit this file (or replace entirely) to match a real bank receipt screenshot.
- * Available placeholders from vars: amount, senderName, when, receiptId
- * (already HTML-escaped). Raw variants: amountRaw, senderNameRaw, whenRaw, receiptIdRaw
+ * Receipt template: CommBank / CBA
+ * Mobile fullscreen layout matched to CBA Receipt / Osko screenshot.
  */
-import { receiptVars } from './_helpers.js';
+import { receiptVars, escapeHtml } from './_helpers.js';
 
 export const bankId = 'commbank';
 export const brandName = 'CommBank';
 
 export function render(data) {
   const v = receiptVars(data);
-  const brand = 'CommBank';
-  const heroTitle = 'Money received';
-  const topBg = '#ffcc00';
-  const topFg = '#111111';
-  const checkBg = '#118c4f';
-  const accent = '#118c4f';
+  const siriName = escapeHtml(String(v.targetNameRaw || '').toUpperCase());
 
   return `<!DOCTYPE html>
 <html lang="en-AU">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="${topBg}" />
-  <title>${brand} — ${heroTitle}</title>
+  <meta name="theme-color" content="#ffffff" />
+  <title>Receipt</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: #ffffff;
+      color: #111;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: #f4f4f4;
-      color: #1a1a1a;
-      min-height: 100vh;
       min-height: 100dvh;
-    }
-    .top {
-      background: ${topBg};
-      color: ${topFg};
-      padding: 14px 16px;
-      padding-top: calc(14px + env(safe-area-inset-top, 0px));
       display: flex;
+      flex-direction: column;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .nav {
+      flex-shrink: 0;
+      display: grid;
+      grid-template-columns: 56px 1fr 64px;
       align-items: center;
-      justify-content: space-between;
-    }
-    .top .brand { font-weight: 800; font-size: 18px; letter-spacing: -0.02em; }
-    .top .close {
-      font-size: 15px; font-weight: 600; color: inherit;
-      text-decoration: none; opacity: 0.95; padding: 6px 4px;
-    }
-    .hero {
-      background: #fff;
-      text-align: center;
-      padding: 36px 20px 28px;
+      min-height: 52px;
+      padding: 8px 8px 8px 4px;
+      padding-top: calc(8px + env(safe-area-inset-top, 0px));
+      background: #f7f7f7;
       border-bottom: 1px solid #e8e8e8;
     }
+    .nav a {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: #111;
+      font-size: 17px;
+      text-decoration: none;
+      padding: 10px 12px;
+    }
+    .nav .title {
+      text-align: center;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .nav .share { text-align: right; }
+    .nav .close {
+      font-size: 28px;
+      line-height: 1;
+      padding: 4px 14px 10px;
+      font-weight: 300;
+    }
+    .content {
+      flex: 1;
+      overflow: auto;
+      padding: 28px 20px 48px;
+      max-width: 480px;
+      width: 100%;
+      margin: 0 auto;
+    }
     .check {
-      width: 64px; height: 64px; border-radius: 50%;
-      background: ${checkBg};
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #34c759;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
     }
-    .check svg { width: 32px; height: 32px; }
-    .hero h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #111; }
-    .hero .amount {
-      font-size: 40px; font-weight: 700; letter-spacing: -0.03em;
-      color: #111; margin: 8px 0 4px;
+    .check svg { width: 20px; height: 20px; display: block; }
+    .paid {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      color: #111;
+      margin-bottom: 6px;
     }
-    .hero .sub { font-size: 15px; color: #5c5c5c; margin-top: 6px; }
-    .card {
+    .phone {
+      font-size: 16px;
+      color: #111;
+      margin-bottom: 10px;
+    }
+    .receipt-no {
+      font-size: 15px;
+      color: #8e8e93;
+      margin-bottom: 28px;
+    }
+    .block { margin-bottom: 22px; }
+    .label {
+      font-size: 17px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 4px;
+    }
+    .value {
+      font-size: 17px;
+      color: #3a3a3c;
+      line-height: 1.35;
+    }
+    .notice {
+      font-size: 17px;
+      color: #111;
+      line-height: 1.4;
+      margin: 8px 0 22px;
+    }
+    .osko-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 28px;
+      color: #8e8e93;
+      font-size: 17px;
+    }
+    .osko-word {
+      font-weight: 600;
+      color: #8e8e93;
+      letter-spacing: -0.02em;
+    }
+    .osko-mark {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #8e8e93;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .osko-mark span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 2px solid #8e8e93;
+      display: block;
+    }
+    .siri-prompt {
+      font-size: 17px;
+      font-weight: 700;
+      color: #111;
+      line-height: 1.3;
+      margin-bottom: 14px;
+    }
+    .siri-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px 10px 12px;
+      border-radius: 999px;
+      border: 1px solid #d1d1d6;
       background: #fff;
-      margin: 16px;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-      border-top: 3px solid ${accent};
+      font-size: 17px;
+      color: #111;
+      text-decoration: none;
     }
-    .row {
-      display: flex; justify-content: space-between; gap: 12px;
-      padding: 16px 18px; border-bottom: 1px solid #eee; font-size: 15px;
-    }
-    .row:last-child { border-bottom: none; }
-    .row .label { color: #5c5c5c; flex-shrink: 0; }
-    .row .value { font-weight: 600; text-align: right; color: #111; word-break: break-word; }
-    .foot {
-      text-align: center; padding: 20px 16px 32px;
-      font-size: 12px; color: #8a8a8a; line-height: 1.45;
+    .siri-orb {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 30%, #ff6b9d, transparent 50%),
+        radial-gradient(circle at 70% 40%, #6b8cff, transparent 55%),
+        radial-gradient(circle at 50% 80%, #5ce1e6, transparent 50%),
+        #c9c9ce;
+      flex-shrink: 0;
     }
   </style>
 </head>
 <body>
-  <header class="top">
-    <div class="brand">${brand}</div>
-    <a class="close" href="javascript:window.close()">Close</a>
+  <header class="nav">
+    <a class="close" href="javascript:window.close()" aria-label="Close">×</a>
+    <div class="title">Receipt</div>
+    <a class="share" href="javascript:void(0)">Share</a>
   </header>
-  <section class="hero">
+  <main class="content">
     <div class="check" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="20 6 9 17 4 12"/>
       </svg>
     </div>
-    <h1>${heroTitle}</h1>
-    <div class="amount">${v.amount}</div>
-    <p class="sub">from ${v.senderName}</p>
-  </section>
-  <section class="card">
-    <div class="row"><span class="label">From</span><span class="value">${v.senderName}</span></div>
-    <div class="row"><span class="label">Amount</span><span class="value">${v.amount}</span></div>
-    <div class="row"><span class="label">When</span><span class="value">${v.when}</span></div>
-    <div class="row"><span class="label">Description</span><span class="value">${v.description}</span></div>
-    ${v.hasPhone ? `<div class="row"><span class="label">Phone</span><span class="value">${v.phone}</span></div>` : ''}
-    <div class="row"><span class="label">Reference</span><span class="value">${v.receiptId}</span></div>
-  </section>
-  <p class="foot">Demonstration receipt for notification testing.<br/>Not affiliated with ${brand} or any bank.</p>
+
+    <h1 class="paid">Paid ${v.amount}<br/>to ${v.targetName}</h1>
+    ${v.hasPhone ? `<p class="phone">${v.phone}</p>` : ''}
+    <p class="receipt-no">Receipt no: ${v.receiptId}</p>
+
+    <div class="block">
+      <div class="label">From</div>
+      <div class="value">${v.senderName}</div>
+    </div>
+
+    <div class="block">
+      <div class="label">Description</div>
+      <div class="value">${v.description}</div>
+    </div>
+
+    <div class="block">
+      <div class="label">Transaction Date</div>
+      <div class="value">${v.when}</div>
+    </div>
+
+    <p class="notice">For security, payments to recently added payees may be held for 24 hours.</p>
+
+    <div class="osko-row">
+      <span>Sent through</span>
+      <span class="osko-word">Osko</span>
+      <span class="osko-mark" aria-hidden="true"><span></span></span>
+    </div>
+
+    <p class="siri-prompt">Add to Siri so you can ask to pay ${siriName}</p>
+    <a class="siri-btn" href="javascript:void(0)">
+      <span class="siri-orb" aria-hidden="true"></span>
+      Add to Siri
+    </a>
+  </main>
 </body>
 </html>`;
 }

@@ -18,7 +18,7 @@ export async function handlePayReceipt(request, env) {
   let row;
   try {
     row = await env.DB.prepare(
-      `SELECT id, amount, sender_name, created_at, bank, description, phone FROM pay_receipts WHERE id = ?`
+      `SELECT id, amount, sender_name, created_at, bank, description, phone, target_name FROM pay_receipts WHERE id = ?`
     )
       .bind(id)
       .first();
@@ -43,6 +43,7 @@ export async function handlePayReceipt(request, env) {
   const html = renderBankReceipt(row.bank || 'commbank', {
     amount: row.amount,
     senderName: row.sender_name,
+    targetName: row.target_name || row.sender_name,
     createdAt: row.created_at,
     receiptId: row.id,
     description: row.description,
