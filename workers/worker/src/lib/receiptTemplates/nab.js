@@ -108,7 +108,8 @@ export function render(data) {
     <div class="row"><span class="label">From</span><span class="value">${v.senderName}</span></div>
     <div class="row"><span class="label">Amount</span><span class="value">${v.amount}</span></div>
     <div class="row"><span class="label">When</span><span class="value">${v.when}</span></div>
-    <div class="row"><span class="label">Description</span><span class="value">Payment received</span></div>
+    <div class="row"><span class="label">Description</span><span class="value">${v.description}</span></div>
+    ${v.hasPhone ? `<div class="row"><span class="label">Phone</span><span class="value">${v.phone}</span></div>` : ''}
     <div class="row"><span class="label">Reference</span><span class="value">${v.receiptId}</span></div>
   </section>
   <p class="foot">Demonstration receipt for notification testing.<br/>Not affiliated with ${brand} or any bank.</p>

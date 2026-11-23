@@ -33,15 +33,22 @@ export function displayAmount(amount) {
 }
 
 /** Build safe view-model for templates */
-export function receiptVars({ amount, senderName, createdAt, receiptId }) {
+export function receiptVars({ amount, senderName, createdAt, receiptId, description, phone }) {
+  const desc = description && String(description).trim() ? String(description).trim() : 'Payment received';
+  const ph = phone && String(phone).trim() ? String(phone).trim() : '';
   return {
     amount: escapeHtml(displayAmount(amount)),
-    senderName: escapeHtml(senderName),
+    senderName: escapeHtml(senderName || ''),
     when: escapeHtml(formatWhen(createdAt)),
     receiptId: escapeHtml(receiptId),
+    description: escapeHtml(desc),
+    phone: escapeHtml(ph),
+    hasPhone: Boolean(ph),
     amountRaw: displayAmount(amount),
     senderNameRaw: String(senderName ?? ''),
     whenRaw: formatWhen(createdAt),
     receiptIdRaw: String(receiptId ?? ''),
+    descriptionRaw: desc,
+    phoneRaw: ph,
   };
 }

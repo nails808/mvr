@@ -18,7 +18,7 @@ export async function handlePayReceipt(request, env) {
   let row;
   try {
     row = await env.DB.prepare(
-      `SELECT id, amount, sender_name, created_at, bank FROM pay_receipts WHERE id = ?`
+      `SELECT id, amount, sender_name, created_at, bank, description, phone FROM pay_receipts WHERE id = ?`
     )
       .bind(id)
       .first();
@@ -45,6 +45,8 @@ export async function handlePayReceipt(request, env) {
     senderName: row.sender_name,
     createdAt: row.created_at,
     receiptId: row.id,
+    description: row.description,
+    phone: row.phone,
   });
 
   return new Response(html, {
