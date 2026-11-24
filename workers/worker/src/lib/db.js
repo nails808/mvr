@@ -49,46 +49,13 @@ export async function ensureSchema(env) {
     env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash)`),
     env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_users_expires ON users(expires_at)`),
     env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id)`),
-    env.DB.prepare(`CREATE TABLE IF NOT EXISTS pay_receipts (
-      id TEXT PRIMARY KEY,
-      user_id INTEGER NOT NULL,
-      amount TEXT NOT NULL,
-      sender_name TEXT NOT NULL,
-      created_at INTEGER NOT NULL,
-      bank TEXT NOT NULL DEFAULT 'commbank',
-      description TEXT,
-      phone TEXT,
-      target_name TEXT,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )`),
-    env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_pay_receipts_user ON pay_receipts(user_id)`),
   ]);
   try {
     await env.DB.prepare(`ALTER TABLE users ADD COLUMN expires_at TEXT`).run();
   } catch {
     /* already exists */
   }
-  try {
-    await env.DB.prepare(`ALTER TABLE pay_receipts ADD COLUMN bank TEXT NOT NULL DEFAULT 'commbank'`).run();
-  } catch {
-    /* already exists */
-  }
 
-  try {
-    await env.DB.prepare(`ALTER TABLE pay_receipts ADD COLUMN description TEXT`).run();
-  } catch {
-    /* already exists */
-  }
-  try {
-    await env.DB.prepare(`ALTER TABLE pay_receipts ADD COLUMN phone TEXT`).run();
-  } catch {
-    /* already exists */
-  }
-  try {
-    await env.DB.prepare(`ALTER TABLE pay_receipts ADD COLUMN target_name TEXT`).run();
-  } catch {
-    /* already exists */
-  }
 }
 
 

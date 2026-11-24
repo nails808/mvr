@@ -18,7 +18,6 @@ import { adminIds, nowIso } from './lib/constants.js';
 import { ensureSchema } from './lib/db.js';
 import { json, withCors } from './lib/http.js';
 import { handleTelegram } from './lib/telegram.js';
-import { handlePayReceipt } from './lib/payReceipt.js';
 
 export default {
   async fetch(request, env) {
@@ -76,8 +75,6 @@ export default {
         res = await handlePushSubscribe(request, env);
       } else if (request.method === 'POST' && path === '/auth/push/unsubscribe') {
         res = await handlePushUnsubscribe(request, env);
-      } else if (request.method === 'GET' && path.startsWith('/pay/receipt/')) {
-        res = await handlePayReceipt(request, env);
       } else {
         res = json({ ok: false, error: 'Not found', path }, 404);
       }
