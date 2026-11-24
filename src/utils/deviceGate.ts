@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+
 /** Device + display-mode helpers for install / mobile gate */
 
 export type MobilePlatform = 'ios' | 'android' | 'other';
@@ -7,20 +9,25 @@ export function isStandaloneDisplay(): boolean {
   try {
     if (window.matchMedia('(display-mode: standalone)').matches) return true;
     if (window.matchMedia('(display-mode: minimal-ui)').matches) return true;
+    if (window.matchMedia('(display-mode: fullscreen)').matches) return true;
   } catch {
     /* ignore */
   }
   // iOS Safari
   const nav = window.navigator as Navigator & { standalone?: boolean };
   if (nav.standalone === true) return true;
+
+  // Chromium opens an installed Android WebAPK from the Android app context.
+  // This is primarily present during launch, while display-mode is being applied.
+  if (document.referrer.startsWith('android-app://')) return true;
   return false;
 }
 
 export function isNativeCapacitor(): boolean {
   try {
-    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } })
-      .Capacitor;
-    return Boolean(cap?.isNativePlatform?.());
+    // Do not rely on window.Capacitor. It is not guaranteed to be exposed by
+    // every Capacitor Android WebView configuration.
+    return Capacitor.isNativePlatform();
   } catch {
     return false;
   }
@@ -67,8 +74,21 @@ export function isMobileDevice(): boolean {
 
 export type GateState = 'desktop' | 'install' | 'app';
 
+function hasRecordedAndroidInstall(): boolean {
+  if (getMobilePlatform() !== 'android') return false;
+  try {
+    return window.localStorage.getItem('myvicroads-pwa-installed') === 'true';
+  } catch {
+    return false;
+  }
+}
+
 export function resolveGateState(): GateState {
   if (canRunFullApp()) return 'app';
+  // `appinstalled` records a completed Chrome install. It covers Android
+  // launches where Chromium briefly reports browser display-mode while the
+  // WebAPK is starting; it is not an authorisation or security decision.
+  if (hasRecordedAndroidInstall()) return 'app';
   if (!isMobileDevice()) return 'desktop';
   return 'install';
 }

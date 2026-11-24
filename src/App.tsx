@@ -49,6 +49,18 @@ function App() {
       /* ignore */
     }
     window.addEventListener('resize', recompute);
+    // Chrome fires this once it has accepted an install. Persisting the state
+    // lets the current tab transition immediately rather than leaving the
+    // user stranded on the onboarding screen while Android opens the WebAPK.
+    const onInstalled = () => {
+      try {
+        localStorage.setItem('myvicroads-pwa-installed', 'true');
+      } catch {
+        /* ignore unavailable storage */
+      }
+      setGate('app');
+    };
+    window.addEventListener('appinstalled', onInstalled);
     const timer = window.setInterval(recompute, 2500);
     return () => {
       try {
@@ -57,6 +69,7 @@ function App() {
         /* ignore */
       }
       window.removeEventListener('resize', recompute);
+      window.removeEventListener('appinstalled', onInstalled);
       window.clearInterval(timer);
     };
   }, []);
