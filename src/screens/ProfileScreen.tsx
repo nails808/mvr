@@ -133,9 +133,9 @@ export function ProfileScreen({
         type="button"
         className="profile-version"
         onClick={() => setShowEditor(true)}
-        aria-label="App version 1.4.8 — edit details"
+        aria-label="App version 1.4.9 — edit details"
       >
-        App version 1.4.8
+        App version 1.4.9
       </button>
 
       {showEditor && (

@@ -1,0 +1,47 @@
+.desk-block {
+  min-height: 100%;
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(160deg, #0d2d6b 0%, #1a4a8a 50%, #e8ecee 50%);
+  font-family: var(--vic-font, Roboto, sans-serif);
+}
+
+.desk-block__card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px 32px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(13, 45, 107, 0.18);
+}
+
+.desk-block__icon {
+  margin-bottom: 16px;
+}
+
+.desk-block__title {
+  margin: 0 0 12px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0d2d6b;
+}
+
+.desk-block__msg {
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a2a3a;
+  line-height: 1.4;
+}
+
+.desk-block__hint {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7c8d;
+  line-height: 1.45;
+}

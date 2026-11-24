@@ -1,0 +1,306 @@
+.ob {
+  min-height: 100%;
+  min-height: 100dvh;
+  background: #e8ecee;
+  font-family: var(--vic-font, Roboto, sans-serif);
+  color: #1a2a3a;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ob-hero {
+  background: linear-gradient(145deg, #0d2d6b, #1a4a8a);
+  color: #fff;
+  padding: 28px 20px 24px;
+  padding-top: calc(28px + env(safe-area-inset-top, 0px));
+}
+
+.ob-hero__badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.ob-hero h1 {
+  margin: 0 0 10px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ob-hero p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+
+.ob-install-wrap {
+  padding: 16px 20px 8px;
+}
+
+.ob-install-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: #0d2d6b;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 16px;
+  cursor: pointer;
+}
+
+.ob-install-btn:disabled {
+  opacity: 0.7;
+}
+
+.ob-install-note,
+.ob-ios-callout {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: #3a4a5a;
+  line-height: 1.4;
+}
+
+.ob-hint {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: #0d2d6b;
+  font-weight: 600;
+}
+
+.ob-guide {
+  padding: 8px 20px 40px;
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+}
+
+.ob-guide h2 {
+  margin: 12px 0 16px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0d2d6b;
+}
+
+.ob-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ob-step {
+  display: flex;
+  gap: 12px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.ob-step__num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #0d2d6b;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ob-step__body h3 {
+  margin: 2px 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.ob-step__body p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #4a5a6a;
+  line-height: 1.4;
+}
+
+.ob-phone {
+  width: 160px;
+  border: 2px solid #c5cdd6;
+  border-radius: 18px;
+  background: #111;
+  padding: 10px 6px 8px;
+  margin: 0 auto;
+}
+
+.ob-phone__notch {
+  width: 48px;
+  height: 5px;
+  border-radius: 4px;
+  background: #333;
+  margin: 0 auto 6px;
+}
+
+.ob-phone__screen {
+  background: #f2f4f6;
+  border-radius: 10px;
+  min-height: 120px;
+  overflow: hidden;
+}
+
+.ob-mock {
+  min-height: 120px;
+  font-size: 10px;
+  color: #222;
+}
+
+.ob-mock__bar {
+  background: #e8eaed;
+  padding: 6px 8px;
+  font-weight: 600;
+  font-size: 9px;
+}
+
+.ob-mock__banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  background: #fff;
+  border-bottom: 1px solid #e0e4e8;
+}
+
+.ob-mock__icon,
+.ob-mock__app-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #0d2d6b;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.ob-mock__banner strong {
+  display: block;
+  font-size: 10px;
+}
+
+.ob-mock__banner small {
+  color: #666;
+  font-size: 9px;
+}
+
+.ob-mock__mini {
+  margin-left: auto;
+  border: 0;
+  background: #0d2d6b;
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.ob-mock__page {
+  padding: 16px 8px;
+  text-align: center;
+  color: #6b7c8d;
+}
+
+.ob-mock--menu {
+  position: relative;
+  background: rgba(0, 0, 0, 0.25);
+  min-height: 130px;
+}
+
+.ob-mock__menu-sheet {
+  position: absolute;
+  right: 6px;
+  top: 8px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  min-width: 110px;
+}
+
+.ob-mock__menu-sheet div {
+  padding: 8px 10px;
+  font-size: 10px;
+}
+
+.ob-mock__menu-hi {
+  background: #e8f0fe;
+  color: #0d2d6b;
+  font-weight: 700;
+}
+
+.ob-mock--home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 120px;
+  background: linear-gradient(180deg, #7eb6e8, #c8ddb8);
+}
+
+.ob-mock--home span {
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.ob-mock--safari {
+  display: flex;
+  flex-direction: column;
+  min-height: 130px;
+}
+
+.ob-mock__safari-bar {
+  background: #e8eaed;
+  padding: 8px;
+  font-size: 9px;
+  text-align: center;
+}
+
+.ob-mock__toolbar {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: #fafafa;
+  border-top: 1px solid #ddd;
+  padding: 6px;
+  font-size: 12px;
+}
+
+.ob-mock__share-hi {
+  background: #e8f0fe;
+  border-radius: 8px;
+  padding: 2px 6px;
+}
+
+.ob-mock--sheet {
+  padding: 10px 0;
+  background: #fff;
+  min-height: 120px;
+}
+
+.ob-mock__sheet-row {
+  padding: 10px 12px;
+  font-size: 11px;
+  border-bottom: 1px solid #eee;
+}

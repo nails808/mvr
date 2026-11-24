@@ -19,6 +19,9 @@ import { HelpInfoScreen } from './screens/HelpInfoScreen';
 import { useAuth } from './auth/AuthContext';
 import './App.css';
 import './screens/Placeholder.css';
+import { resolveGateState, type GateState } from './utils/deviceGate';
+import { DesktopBlockedScreen } from './screens/DesktopBlockedScreen';
+import { InstallOnboardingScreen } from './screens/InstallOnboardingScreen';
 
 function App() {
   const { status, username } = useAuth();
@@ -31,6 +34,32 @@ function App() {
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
   const [cameraDenied, setCameraDenied] = useState(false);
+  const [gate, setGate] = useState<GateState>(() =>
+    typeof window !== 'undefined' ? resolveGateState() : 'app'
+  );
+
+  useEffect(() => {
+    const recompute = () => setGate(resolveGateState());
+    recompute();
+    let mq: MediaQueryList | null = null;
+    try {
+      mq = window.matchMedia('(display-mode: standalone)');
+      mq.addEventListener?.('change', recompute);
+    } catch {
+      /* ignore */
+    }
+    window.addEventListener('resize', recompute);
+    const timer = window.setInterval(recompute, 2500);
+    return () => {
+      try {
+        mq?.removeEventListener?.('change', recompute);
+      } catch {
+        /* ignore */
+      }
+      window.removeEventListener('resize', recompute);
+      window.clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     userRepository.saveUserData(userData);
@@ -96,6 +125,14 @@ function App() {
     setCameraDenied(false);
     setStack('cameraPermission');
   }, []);
+
+
+  if (gate === 'desktop') {
+    return <DesktopBlockedScreen />;
+  }
+  if (gate === 'install') {
+    return <InstallOnboardingScreen />;
+  }
 
   if (status === 'loading') {
     return (
